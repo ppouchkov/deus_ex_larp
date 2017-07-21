@@ -19,5 +19,3 @@ node_holder = JabberUser(
 )
 
 data = config_parser.get('global', 'data_folder')
-
-print node_holder
