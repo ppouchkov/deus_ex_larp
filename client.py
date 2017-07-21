@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import datetime
+from collections import deque
 from time import sleep
 import sleekxmpp
 
@@ -10,6 +11,10 @@ from config import attacker, node_holder
 class ResendingClient(sleekxmpp.ClientXMPP):
     greeting_message = 'The very first test {}'.format(datetime.datetime.now())
     sending_delay = datetime.timedelta(seconds=1)
+
+    @classmethod
+    def _is_internal_command(cls, input_str):
+        return str(input_str).startswith('/')
 
     def read_stdin(self):
         while True:
@@ -29,6 +34,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
         self.last_command_sent = datetime.datetime.now()
         self.recipient = node_holder.jid
+        self.input_buffer = deque([], 5)
+        self.output_buffer = deque([], 5)
+
         self.reply_handler = self.default_message_handler
 
         if self.connect():
@@ -49,14 +57,24 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if message == '/exit':
             self.close()
             return
+        self.input_buffer.appendleft(message)
         delta = (self.last_command_sent + self.sending_delay - datetime.datetime.now()).total_seconds()
         if delta > 0:
             sleep(delta)
-        self.send_message(self.recipient, message, mtype='chat')
+        if not self._is_internal_command(message):
+            self.send_message(self.recipient, message, mtype='chat')
+            return
+        message_split = message.split()
+        command, args = message_split[0].strip('/'), message_split[1:]
+        if hasattr(self, 'cmd_{}'.format(command)):
+            getattr(self, 'cmd_{}'.format(command))(*args)
+        else:
+            self.default_message_handler(message)
         self.last_command_sent = datetime.datetime.now()
 
     def message(self, msg):
-        print self.reply_handler(msg['body'])
+        self.output_buffer.appendleft(self.reply_handler(msg['body']))
+        print self.output_buffer[0]
 
     def default_message_handler(self, message):
         return message
@@ -64,6 +82,16 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def close(self):
         print 'disconnect'
         self.disconnect(wait=True)
+
+    def cmd_repeat(self, i = None):
+        try:
+            message = self.input_buffer[i and int(i) or 1]
+            print '/repeat: {}'.format(message)
+            self.forward_message(message)
+        except IndexError:
+            print '/repeat: ERROR empty buffer'
+        except ValueError:
+            print '/repeat: ERROR index should be integer'
 
 if __name__ == '__main__':
     rc = ResendingClient()
