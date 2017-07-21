@@ -9,7 +9,7 @@ def search_attr(pattern, input_str, none_value):
     if search:
         result = search.group(search.lastindex) and str(search.group(search.lastindex)).strip()
         if result != none_value:
-            return result
+            return result.strip()
     return None
 
 
