@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 from functools import partial
 
 import yaml
@@ -50,15 +51,16 @@ class ParsedValue(object):
 class ParsedObject(yaml.YAMLObject):
     template = None
     yaml_tag = u'!Data'
-
-    def yaml_dump(self, folder, name):
-        with open('{}/{}'.format(folder, name), 'w') as f:
-            yaml.dump(self, f, default_flow_style=False, default_style='|')
+    yaml_flow_style = '|'
+    hidden_fields = []
 
     @classmethod
-    def yaml_load(cls, folder, name):
-        with open('{}/{}'.format(folder, name), 'r') as f:
-            return yaml.load(f)
+    def to_yaml(cls, dumper, data):
+        new_data = deepcopy(data)
+        for item in cls.hidden_fields:
+            del new_data.__dict__[item]
+        return dumper.represent_yaml_object(cls.yaml_tag, new_data, cls,
+                                            flow_style=cls.yaml_flow_style)
 
     @classmethod
     def from_str(cls, input_str):
