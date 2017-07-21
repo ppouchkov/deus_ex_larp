@@ -1,0 +1,12 @@
+[global]
+data_folder=data
+
+[attacker]
+jid=bravo_deus_ex_larp@jabber.ru
+pwd=bdel12345
+
+[node_holder]
+jid=charlie_deus_ex_larp@jabber.ru
+# pwd=bdel12345
+pwd=
+
