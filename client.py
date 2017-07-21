@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 import datetime
 from collections import deque
+from functools import partial
 from time import sleep
+
+import re
 import sleekxmpp
 
 from config import attacker, node_holder
@@ -37,7 +40,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.input_buffer = deque([], 5)
         self.output_buffer = deque([], 5)
 
-        self.reply_handler = self.default_message_handler
+        self.reply_handler = self.default_reply_handler
 
         if self.connect():
             self.process(block=True)
@@ -69,21 +72,31 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if hasattr(self, 'cmd_{}'.format(command)):
             getattr(self, 'cmd_{}'.format(command))(*args)
         else:
-            self.default_message_handler(message)
+            self.default_reply_handler(message)
         self.last_command_sent = datetime.datetime.now()
 
     def message(self, msg):
         self.output_buffer.appendleft(self.reply_handler(msg['body']))
         print self.output_buffer[0]
 
-    def default_message_handler(self, message):
+    def default_reply_handler(self, message):
+        return message
+
+    def match_pattern_reply_handler(self, message, pattern):
+        try:
+            assert re.match(pattern, message), \
+                'reply pattern mismatch, expected: {}'.format(pattern.pattern)
+        except Exception as e:
+            print str(e)
+        finally:
+            self.reply_handler = self.default_reply_handler
         return message
 
     def close(self):
         print 'disconnect'
         self.disconnect(wait=True)
 
-    def cmd_repeat(self, i = None):
+    def cmd_repeat(self, i=None):
         try:
             message = self.input_buffer[i and int(i) or 1]
             print '/repeat: {}'.format(message)
@@ -92,6 +105,16 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             print '/repeat: ERROR empty buffer'
         except ValueError:
             print '/repeat: ERROR index should be integer'
+
+    def cmd_target(self, system):
+        try:
+            assert system, 'Specify system name'
+            self.forward_message('target {}'.format(system))
+
+            self.reply_handler = partial(self.match_pattern_reply_handler,
+                                         pattern=re.compile("ok"))
+        except Exception as e:
+            print str(e)
 
 if __name__ == '__main__':
     rc = ResendingClient()
