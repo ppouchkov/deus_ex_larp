@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import datetime
+import os
 from collections import deque
 from functools import partial
 from time import sleep
@@ -8,7 +9,7 @@ from time import sleep
 import re
 import sleekxmpp
 
-from config import attacker, node_holder
+from config import attacker, node_holder, data
 
 
 class ResendingClient(sleekxmpp.ClientXMPP):
@@ -111,10 +112,17 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             assert system, 'Specify system name'
             self.forward_message('target {}'.format(system))
 
+            target_folder = '{}/{}'.format(data, system)
+            if not os.path.exists(target_folder):
+                os.mkdir(target_folder)
+
             self.reply_handler = partial(self.match_pattern_reply_handler,
                                          pattern=re.compile("ok"))
         except Exception as e:
             print str(e)
+
+    def cmd_status(self):
+        pass
 
 if __name__ == '__main__':
     rc = ResendingClient()
