@@ -8,10 +8,11 @@ from time import sleep
 
 import re
 import sleekxmpp
+import yaml
 
 from config import attacker, node_holder, data
 from entities import System
-from parsers import parse_status
+from parsers import parse_status, parse_program
 
 
 class ResendingClient(sleekxmpp.ClientXMPP):
@@ -148,6 +149,43 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.current = parse_status(message)
         self.wait_for_reply = False
         return str(self.current)
+
+    def cmd_info(self, program_code):
+        current_code = None
+        current_folder = os.path.join(data, 'programs')
+        if isinstance(program_code, basestring) and str(program_code).startswith('#'):
+            program_code.strip('#')
+        if isinstance(program_code, basestring) and str(program_code).isdigit():
+            current_code = int(program_code)
+        if current_code is None:
+            print 'wrong code: {}'.format(program_code)
+            return
+
+        if not os.path.exists(current_folder):
+            print 'create folder {}'.format(current_folder)
+            os.mkdir(current_folder)
+
+        if not os.path.exists(os.path.join(current_folder, '#{}'.format(current_code))):
+            self.reply_handler = self.info_reply_handler
+            self.wait_for_reply = True
+            self.forward_message('info #{}'.format(current_code))
+            while self.wait_for_reply:
+                sleep(0.5)
+        else:
+            with open(os.path.exists(os.path.join(current_folder, '#{}'.format(current_code)))) as f:
+                print yaml.load(f)
+
+    def info_reply_handler(self, message):
+        try:
+            current_folder = os.path.join(data, 'programs')
+            program = parse_program(message)
+            with open(os.path.join(current_folder, '#{}'.format(program.code)), 'w') as f:
+                yaml.dump(program, f, default_style='|')
+            self.wait_for_reply = False
+        except Exception as e:
+            print str(e)
+        return message
+
 
 
 if __name__ == '__main__':
