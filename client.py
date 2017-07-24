@@ -159,7 +159,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if not os.path.exists(os.path.join(current_folder, effect_name)):
             self.reply_handler = partial(self.dump_reply_handler,
                                          folder=current_folder,
-                                         file_name_getter=lambda x: '#{0.name}'.format(x),
+                                         file_name_getter=lambda x: '{0.name}'.format(x),
                                          parser=parse_effect)
             self.wait_for_reply = True
             self.forward_message('info #{}'.format(effect_name))
