@@ -184,6 +184,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             self.wait_for_reply = False
         except Exception as e:
             print str(e)
+            return 'ERROR'
         return message
 
 
