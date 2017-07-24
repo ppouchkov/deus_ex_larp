@@ -258,6 +258,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             sleep(0.5)
 
         self.target.update_from_folder('{}/{}'.format(data, self.target.name))
+        self.target.draw('{}/{}'.format(data, self.target.name), view=False)
 
     def look_reply_handler(self, message):
         system_node = parse_node(message)
