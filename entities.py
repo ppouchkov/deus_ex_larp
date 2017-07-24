@@ -93,7 +93,8 @@ class ProgramSet(YAMLObject):
 class SystemNode(YAMLObject):
     yaml_tag = '!SystemNode'
 
-    def __init__(self, system, name, encrypted, program_code, node_type, node_effect_name, disabled, child_nodes_names):
+    def __init__(self, system, name, encrypted, program_code, node_type, node_effect_name, disabled, child_nodes_names,
+                 available):
         self.system = system
         self.name = name
         self.encrypted = encrypted
@@ -102,6 +103,7 @@ class SystemNode(YAMLObject):
         self.node_effect_name = node_effect_name
         self.disabled = disabled
         self.child_nodes_names = child_nodes_names
+        self.available = available
 
     @property
     def graphviz_style_dict(self):
