@@ -241,7 +241,17 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             print "I/O error({0}): {1}".format(errno, strerror)
 
     def cmd_look(self, system_node):
-        pass
+        self.reply_handler = self.look_reply_handler
+        self.wait_for_reply = True
+
+        self.forward_message('look {}'.format(system_node))
+
+        while self.wait_for_reply:
+            sleep(0.5)
+
+    def look_reply_handler(self, message):
+        self.wait_for_reply = False
+        return message
 
     def cmd_explore(self, system_node='firewall'):
         pass
