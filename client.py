@@ -166,7 +166,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             os.mkdir(current_folder)
 
         if not os.path.exists(os.path.join(current_folder, '#{}'.format(current_code))):
-            self.reply_handler = self.info_reply_handler
+            self.reply_handler = partial(self.dump_reply_handler,
+                                         folder='programs',
+                                         file_name_getter=lambda x: '#{0.code}'.format(x.code),
+                                         parser=parse_program)
             self.wait_for_reply = True
             self.forward_message('info #{}'.format(current_code))
             while self.wait_for_reply:
@@ -175,18 +178,17 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             with open(os.path.exists(os.path.join(current_folder, '#{}'.format(current_code)))) as f:
                 print yaml.load(f)
 
-    def info_reply_handler(self, message):
+    def dump_reply_handler(self, message, folder, file_name_getter, parser):
         try:
-            current_folder = os.path.join(data, 'programs')
-            program = parse_program(message)
-            with open(os.path.join(current_folder, '#{}'.format(program.code)), 'w') as f:
-                yaml.dump(program, f, default_style='|')
+            current_folder = os.path.join(data, folder)
+            obj = parser(message)
+            with open(os.path.join(current_folder, file_name_getter(obj)), 'w') as f:
+                yaml.dump(obj, f, default_style='|')
             self.wait_for_reply = False
         except Exception as e:
             print str(e)
             return 'ERROR'
         return message
-
 
 
 if __name__ == '__main__':
