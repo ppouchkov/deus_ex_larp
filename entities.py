@@ -5,15 +5,13 @@ import yaml
 
 class YAMLObject(yaml.YAMLObject):
     hidden_fields = []
-    yaml_flow_style = "|"
 
     @classmethod
     def to_yaml(cls, dumper, data):
         new_data = deepcopy(data)
         for item in cls.hidden_fields:
             del new_data.__dict__[item]
-        return dumper.represent_yaml_object(cls.yaml_tag, new_data, cls,
-                                            flow_style=cls.yaml_flow_style)
+        return dumper.represent_yaml_object(cls.yaml_tag, new_data, cls, flow_style=cls.yaml_flow_style)
 
 
 class Status(YAMLObject):
@@ -27,6 +25,16 @@ class Status(YAMLObject):
         self.adm_system = adm_system
         self.proxy_level = proxy_level
         self.proxy_address = proxy_address
+
+    def __str__(self):
+        return """
+--------------------
+Current target: {0.target}
+Current administrating system: {0.adm_system}
+Proxy level: {0.proxy_level}
+Current proxy address: {0.proxy_address}
+END ----------------
+        """.strip().format(self)
 
 
 class Effect(YAMLObject):
