@@ -1,7 +1,9 @@
 import re
 
+import yaml
+
 import test_strings
-from entities import Status
+from entities import Status, Program
 
 
 def search_string(pattern, input_str, none_value=None):
@@ -25,3 +27,10 @@ def parse_status(input_string):
     return Status(target, adm_system, proxy_level, proxy_address)
 
 
+def parse_program(input_string):
+    code = int(search_string("#(\d+?) program+ info:", input_string) or 0)
+    effect_name = search_string("Effect: (.*?)\n", input_string)
+    node_types = re.findall("- *([^-|\n].*?)\n", input_string)
+    duration = search_string("Duration: (.*?)\n", input_string)
+    inevitable_effect_name = search_string("Inevitable effect: (.*?)\n", input_string)
+    return Program(code, effect_name, node_types, duration, inevitable_effect_name)

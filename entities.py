@@ -49,10 +49,39 @@ class Effect(YAMLObject):
 class Program(YAMLObject):
     yaml_tag = '!Program'
 
-    def __init__(self, code, effect_name, node_types):
+    def __init__(self, code, effect_name, node_types, duration, inevitable_effect_name):
         self.code = code
         self.effect_name = effect_name
         self.node_types = node_types
+        self.duration = duration
+        self.inevitable_effect_name = inevitable_effect_name
+
+    def __str__(self):
+        return """
+--------------------
+#{0.code} programm info:
+Effect: {0.effect_name}
+Inevitable effect: {0.inevitable_effect_name}
+Allowed node types:
+{allowed_node_types_str}
+Duration: {0.duration}
+END ----------------
+        """.strip().format(
+            self,
+            allowed_node_types_str='\n'.join(' -{}'.format(node_type) for node_type in self.node_types))
+
+
+class ProgramSet(YAMLObject):
+    yaml_tag = '!ProgramSet'
+
+    def __init__(self):
+        self.programs = {}
+
+    def add_program(self, program):
+        pass
+
+    def find_breakthrough(self, defence):
+        pass
 
 
 class SystemNode(YAMLObject):
