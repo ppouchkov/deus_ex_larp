@@ -228,9 +228,12 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             current_folder = data
         else:
             current_folder = os.path.join(data, self.target.name)
-        with open(os.path.join(current_folder, 'stored_data'), "a") as f:
+        try:
+            f = open(os.path.join(current_folder, 'stored_data'), "a", 0)
             f.write(self.output_buffer[0])
-            f.flush()
+            f.close()
+        except IOError as (errno, strerror):
+            print "I/O error({0}): {1}".format(errno, strerror)
 
 if __name__ == '__main__':
     rc = ResendingClient()
