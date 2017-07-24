@@ -229,7 +229,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         else:
             current_folder = os.path.join(data, self.target.name)
         with open(os.path.join(current_folder, 'stored_data'), "a") as f:
-            f.write("message")
+            f.write(self.output_buffer[0])
             f.flush()
 
 if __name__ == '__main__':
