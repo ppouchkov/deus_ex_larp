@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 
 import yaml
@@ -118,7 +119,9 @@ class System(YAMLObject):
         self.node_graph = {}
 
     def update_from_folder(self, folder_name):
-        pass
+        for elem in os.listdir(folder_name):
+            with open(os.path.join(folder_name, elem)) as f:
+                self.add_node(yaml.load(f))
 
     def add_node(self, new_node):
         current_node = self.node_graph.setdefault(new_node.name, new_node)
