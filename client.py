@@ -12,7 +12,7 @@ import yaml
 
 from config import attacker, node_holder, data
 from entities import System
-from parsers import parse_status, parse_program, parse_effect
+from parsers import parse_status, parse_program, parse_effect, parse_node
 
 
 class ResendingClient(sleekxmpp.ClientXMPP):
@@ -222,10 +222,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             obj = parser(message)
             with open(os.path.join(folder, file_name_getter(obj)), 'w') as f:
                 yaml.dump(obj, f, default_style='|')
-            self.wait_for_reply = False
         except Exception as e:
             print str(e)
             return 'ERROR'
+        self.wait_for_reply = False
         return message
 
     def cmd_store(self, file_name='stored_data'):
@@ -252,9 +252,20 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         while self.wait_for_reply:
             sleep(0.5)
 
+        self.target.update_from_folder('{}/{}'.format(data, self.target.name))
+
     def look_reply_handler(self, message):
-        self.wait_for_reply = False
-        return message
+        system_node = parse_node(message)
+        if self.target.name != system_node.system:
+            self.wait_for_reply = False
+            return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.name)
+
+        return self.dump_reply_handler(
+            message,
+            '{}/{}'.format(data, self.target.name),
+            lambda obj: obj.name,
+            parse_node
+        )
 
     def cmd_explore(self, system_node='firewall'):
         pass

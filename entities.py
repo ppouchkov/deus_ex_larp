@@ -117,7 +117,7 @@ class System(YAMLObject):
         self.name = name
         self.node_graph = {}
 
-    def update_from_folder(self, folder_name=None):
+    def update_from_folder(self, folder_name):
         pass
 
     def add_node(self, new_node):
