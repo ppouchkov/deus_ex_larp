@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 
 import yaml
+from graphviz import Digraph
 
 
 class YAMLObject(yaml.YAMLObject):
@@ -103,7 +104,7 @@ class SystemNode(YAMLObject):
         self.node_type = node_type
         self.node_effect_name = node_effect_name
         self.disabled = disabled
-        self.child_nodes_names = child_nodes_names
+        self.child_nodes_names = child_nodes_names or []
         self.available = available
 
     @property
@@ -135,5 +136,23 @@ class System(YAMLObject):
         current_node.child_nodes_names = new_node.child_nodes_names or current_node.child_nodes_names
         current_node.available = new_node.available
 
-    def draw(self, view=False):
-        pass
+    def draw(self, folder_name, view=False):
+        dot = Digraph(name=self.name, format='svg')
+        dot.attr(size='8')
+
+        node_buffer = [self.node_graph.get('firewall', SystemNode(self.name, 'firewall', *([None]*6 + [True])))]
+        edge_buffer = []
+        elem_visited = set()
+        while node_buffer:
+            current_node = node_buffer.pop(0)
+            assert isinstance(current_node, SystemNode)
+            if current_node.name in elem_visited:
+                continue
+            elem_visited.add(current_node.name)
+            dot.node(current_node.name, **current_node.graphviz_style_dict)
+            for child_name in current_node.child_nodes_names:
+                node_buffer.append(self.node_graph[child_name])
+                edge_buffer.append((current_node.name, child_name))
+        for elem in edge_buffer:
+            dot.edge(*elem)
+        dot.render(os.path.join(folder_name, self.name), view)
