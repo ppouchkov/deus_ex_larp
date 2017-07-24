@@ -150,7 +150,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.wait_for_reply = False
         return str(self.current)
 
-    def cmd_effect(self, effect_name):
+    def cmd_effect(self, effect_name, verbose=True):
         current_folder = os.path.join(data, 'effects')
         if not os.path.exists(current_folder):
             print 'create folder {}'.format(current_folder)
@@ -165,7 +165,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             self.forward_message('info #{}'.format(effect_name))
             while self.wait_for_reply:
                 sleep(0.5)
-        else:
+        elif verbose:
             with open(os.path.exists(os.path.join(current_folder, effect_name))) as f:
                 print yaml.load(f)
 
@@ -199,9 +199,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         with open(os.path.exists(os.path.join(current_folder, '#{}'.format(current_code)))) as f:
             current_program = yaml.load(f)
 
-        self.cmd_effect(current_program.effect_name)
+        self.cmd_effect(current_program.effect_name, verbose=False)
         if current_program.inevitable_effect_name:
-            self.cmd_effect(current_program.inevitable_effect_name)
+            self.cmd_effect(current_program.inevitable_effect_name, verbose=False)
 
     def dump_reply_handler(self, message, folder, file_name_getter, parser):
         try:
