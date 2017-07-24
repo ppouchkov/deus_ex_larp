@@ -10,6 +10,7 @@ import re
 import sleekxmpp
 
 from config import attacker, node_holder, data
+from entities import System
 from parsers import parse_status
 
 
@@ -46,7 +47,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.wait_for_reply = False
 
         self.current = None
-        self.system = None
+        self.target = None
 
         if self.connect():
             self.process(block=True)
@@ -122,6 +123,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             target_folder = '{}/{}'.format(data, system)
             if not os.path.exists(target_folder):
                 os.mkdir(target_folder)
+                self.target = System(system)
 
             self.reply_handler = partial(self.match_pattern_reply_handler, pattern="ok")
             self.wait_for_reply = True
