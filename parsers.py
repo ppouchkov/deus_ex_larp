@@ -3,7 +3,7 @@ import re
 import yaml
 
 import test_strings
-from entities import Status, Program
+from entities import Status, Program, Effect
 
 
 def search_string(pattern, input_str, none_value=None):
@@ -34,3 +34,11 @@ def parse_program(input_string):
     duration = search_string("Duration: (.*?)\n", input_string)
     inevitable_effect_name = search_string("Inevitable effect: (.*?)\n", input_string)
     return Program(code, effect_name, node_types, duration, inevitable_effect_name)
+
+
+def parse_effect(input_string):
+    name = search_string("Info about '(.*?)' effect:", input_string)
+    info = search_string(re.compile("""effect:\n(.*?)Effect class:""", re.MULTILINE | re.DOTALL),
+                         input_string)
+    effect_class = search_string("Effect class: (.*?)[\n|.]", input_string)
+    return Effect(name, effect_class, info)

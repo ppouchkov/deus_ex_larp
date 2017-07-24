@@ -45,6 +45,15 @@ class Effect(YAMLObject):
         self.effect_class = effect_class
         self.info = info
 
+    def __str__(self):
+        return """
+--------------------
+Info about '{0.name}' effect:
+{0.info}
+Effect class: {0.effect_class}.
+END ----------------
+        """.strip().format(self)
+
 
 class Program(YAMLObject):
     yaml_tag = '!Program'
@@ -76,9 +85,6 @@ class ProgramSet(YAMLObject):
 
     def __init__(self):
         self.programs = {}
-
-    def add_program(self, program):
-        pass
 
     def find_breakthrough(self, defence):
         pass
