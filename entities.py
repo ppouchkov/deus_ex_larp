@@ -128,8 +128,15 @@ class System(YAMLObject):
         self.name = name
         self.node_graph = {}
 
-    def add_node(self):
-        pass
+    def add_node(self, new_node):
+        current_node = self.node_graph.setdefault(new_node.name, new_node)
+        assert isinstance(current_node, SystemNode)
+        current_node.encrypted = new_node.encrypted
+        current_node.program_code = new_node.program_code or current_node.program_code
+        current_node.node_effect_name = new_node.node_effect_name or current_node.node_effect_name
+        current_node.disabled = new_node.disabled
+        current_node.child_nodes_names = new_node.child_nodes_names or current_node.child_nodes_names
+        current_node.available = new_node.available
 
     def draw(self, view=False):
         pass
