@@ -123,7 +123,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             if not os.path.exists(target_folder):
                 os.mkdir(target_folder)
 
-            self.reply_handler = partial(self.match_pattern_reply_handler, pattern=re.compile("ok"))
+            self.reply_handler = partial(self.match_pattern_reply_handler, pattern="ok")
             self.wait_for_reply = True
 
             self.forward_message('target {}'.format(system))
