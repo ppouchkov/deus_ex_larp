@@ -149,3 +149,24 @@ END ----------------
 node_short = """
 VPN3 (VPN): #5887791   Child nodes:[cryptocore1, antivirus1, traffic_monitor1]
 """
+
+look_reply_disabled = """
+--------------------
+Node "Citizen121/firewall" properties:
+Installed program: #14510925
+Type: Firewall
+DISABLED for: 495 sec
+Child nodes:
+0: antivirus1 (Antivirus): #3184236 DISABLED
+1: antivirus2 (Antivirus): #43086043
+
+END ----------------
+"""
+
+look_reply_enabled = """
+--------------------
+Node "MountainOfLight/firewall" properties:
+Installed program: #5382749372
+Type: Firewall
+END ----------------
+"""
