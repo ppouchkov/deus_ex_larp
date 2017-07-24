@@ -113,20 +113,12 @@ class SystemNode(YAMLObject):
 class System(YAMLObject):
     yaml_tag = '!System'
 
-    @classmethod
-    def to_yaml(cls, dumper, data):
-        # TODO split graph nodes to files
-        return dumper.represent_yaml_object(cls.yaml_tag, data, cls,
-                                            flow_style=cls.yaml_flow_style)
-
-    @classmethod
-    def from_yaml(cls, loader, node):
-        # TODO gather graph node from files
-        return loader.construct_yaml_object(node, cls)
-
     def __init__(self, name):
         self.name = name
         self.node_graph = {}
+
+    def update_from_folder(self, folder_name=None):
+        pass
 
     def add_node(self, new_node):
         current_node = self.node_graph.setdefault(new_node.name, new_node)
