@@ -10,6 +10,7 @@ import re
 import sleekxmpp
 
 from config import attacker, node_holder, data
+from parsers import parse_status
 
 
 class ResendingClient(sleekxmpp.ClientXMPP):
@@ -134,7 +135,18 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             print str(e)
 
     def cmd_status(self):
-        pass
+        self.reply_handler = self.status_reply_handler
+        self.wait_for_reply = True
+
+        self.forward_message('status')
+        while self.wait_for_reply:
+            sleep(0.5)
+
+    def status_reply_handler(self, message):
+        self.current = parse_status(message)
+        self.wait_for_reply = False
+        return str(self.current)
+
 
 if __name__ == '__main__':
     rc = ResendingClient()
