@@ -42,6 +42,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.output_buffer = deque([], 5)
 
         self.reply_handler = self.default_reply_handler
+        self.wait_for_reply = False
+
+        self.current = None
+        self.system = None
 
         if self.connect():
             self.process(block=True)
@@ -73,17 +77,19 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if hasattr(self, 'cmd_{}'.format(command)):
             getattr(self, 'cmd_{}'.format(command))(*args)
         else:
-            self.default_reply_handler(message)
+            print 'No such command {}'.format(command)
         self.last_command_sent = datetime.datetime.now()
 
     def message(self, msg):
         self.output_buffer.appendleft(self.reply_handler(msg['body']))
         print self.output_buffer[0]
 
-    def default_reply_handler(self, message):
+    @classmethod
+    def default_reply_handler(cls, message):
         return message
 
     def match_pattern_reply_handler(self, message, pattern):
+        print 'reply handler'
         try:
             assert re.match(pattern, message), \
                 'reply pattern mismatch, expected: {}'.format(pattern.pattern)
@@ -91,6 +97,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             print str(e)
         finally:
             self.reply_handler = self.default_reply_handler
+            self.wait_for_reply = False
         return message
 
     def close(self):
@@ -110,14 +117,19 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def cmd_target(self, system):
         try:
             assert system, 'Specify system name'
-            self.forward_message('target {}'.format(system))
 
             target_folder = '{}/{}'.format(data, system)
             if not os.path.exists(target_folder):
                 os.mkdir(target_folder)
 
-            self.reply_handler = partial(self.match_pattern_reply_handler,
-                                         pattern=re.compile("ok"))
+            self.reply_handler = partial(self.match_pattern_reply_handler, pattern=re.compile("ok"))
+            self.wait_for_reply = True
+
+            self.forward_message('target {}'.format(system))
+
+            while self.wait_for_reply:
+                sleep(0.5)
+
         except Exception as e:
             print str(e)
 
