@@ -176,6 +176,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             program_code.strip('#')
         if isinstance(program_code, basestring) and str(program_code).isdigit():
             current_code = int(program_code)
+        elif isinstance(program_code, int):
+            current_code = program_code
         if current_code is None:
             print 'wrong code: {}'.format(program_code)
             return
