@@ -137,6 +137,11 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         except Exception as e:
             print str(e)
 
+    def cmd_draw(self, view=True):
+        if self.target:
+            target_folder = '{}/{}'.format(data, self.target.name)
+            self.target.draw(target_folder, view)
+
     def cmd_status(self):
         self.reply_handler = self.status_reply_handler
         self.wait_for_reply = True
