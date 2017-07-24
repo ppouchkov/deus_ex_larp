@@ -213,6 +213,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             sleep(1)
         print 'finish batch_info'
 
+    def cmd_file_info(self, file_name):
+        with open(os.path.join(data, file_name)) as f:
+            self.cmd_batch_info(*f.readlines())
+
     def dump_reply_handler(self, message, folder, file_name_getter, parser):
         try:
             obj = parser(message)
@@ -224,17 +228,35 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             return 'ERROR'
         return message
 
-    def cmd_store(self):
+    def cmd_store(self, file_name='stored_data'):
         if self.target is None:
             current_folder = data
         else:
             current_folder = os.path.join(data, self.target.name)
         try:
-            f = open(os.path.join(current_folder, 'stored_data'), "a", 0)
+            f = open(os.path.join(current_folder, file_name), "a", 0)
             f.write(self.output_buffer[0])
             f.close()
         except IOError as (errno, strerror):
             print "I/O error({0}): {1}".format(errno, strerror)
+
+    def cmd_look(self, system_node):
+        pass
+
+    def cmd_explore(self, system_node='firewall'):
+        pass
+
+    def cmd_explore_forward(self, system_node='firewall'):
+        pass
+
+    def cmd_attack(self, system_node, program_code=None, skip_choice=False):
+        pass
+
+    def cmd_attack_forward(self, system_node, skip_choice=False):
+        pass
+
+    def cmd_parse_diagnostics(self, file_name):
+        pass
 
 if __name__ == '__main__':
     rc = ResendingClient()
