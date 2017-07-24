@@ -92,7 +92,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         return message
 
     def match_pattern_reply_handler(self, message, pattern):
-        print 'reply handler'
         try:
             assert re.match(pattern, message), \
                 'reply pattern mismatch, expected: {}'.format(pattern.pattern)

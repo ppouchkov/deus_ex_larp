@@ -155,4 +155,4 @@ class System(YAMLObject):
                 edge_buffer.append((current_node.name, child_name))
         for elem in edge_buffer:
             dot.edge(*elem)
-        dot.render(os.path.join(folder_name, self.name), view)
+        dot.render(self.name, folder_name, view)

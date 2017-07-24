@@ -1,7 +1,9 @@
 import ConfigParser
+import os
 from collections import namedtuple
 
 CONFIG_PATH = 'config'
+os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
 
 config_parser = ConfigParser.RawConfigParser()
 config_parser.read(CONFIG_PATH)
