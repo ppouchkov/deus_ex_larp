@@ -204,14 +204,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.cmd_effect(current_program.effect_name, verbose=False)
         if current_program.inevitable_effect_name:
             self.cmd_effect(current_program.inevitable_effect_name, verbose=False)
-        print 'finish info'
+        print 'finish info {}'.format(current_code)
 
     def cmd_batch_info(self, *program_codes, **kwargs):
         program_codes = [code.strip(' ,\n') for code in program_codes]
         for program_code in program_codes:
             self.cmd_info(program_code, kwargs.get('verbose', True))
             sleep(1)
-        print 'finish batch_info'
+        print 'finish batch_info {}'.format(len(program_codes))
 
     def cmd_file_info(self, file_name, verbose=False):
         with open(os.path.join(data, file_name)) as f:
