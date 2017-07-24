@@ -173,7 +173,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         current_code = None
         current_folder = os.path.join(data, 'programs')
         if isinstance(program_code, basestring) and str(program_code).startswith('#'):
-            program_code.strip('#')
+            program_code = program_code.strip('#')
         if isinstance(program_code, basestring) and str(program_code).isdigit():
             current_code = int(program_code)
         elif isinstance(program_code, int):
