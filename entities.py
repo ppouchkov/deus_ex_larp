@@ -16,7 +16,7 @@ class YAMLObject(yaml.YAMLObject):
                                             flow_style=cls.yaml_flow_style)
 
 
-class Status(yaml.YAMLObject):
+class Status(YAMLObject):
     yaml_tag = u'!Status'
     __shared_state = {}
 
@@ -29,7 +29,7 @@ class Status(yaml.YAMLObject):
         self.proxy_address = proxy_address
 
 
-class Effect(yaml.YAMLObject):
+class Effect(YAMLObject):
     yaml_tag = u'!Effect'
 
     def __init__(self, name, effect_class, info=None):
@@ -38,7 +38,7 @@ class Effect(yaml.YAMLObject):
         self.info = info
 
 
-class Program(yaml.YAMLObject):
+class Program(YAMLObject):
     yaml_tag = '!Program'
 
     def __init__(self, code, effect_name, node_types):
@@ -47,7 +47,7 @@ class Program(yaml.YAMLObject):
         self.node_types = node_types
 
 
-class SystemNode(yaml.YAMLObject):
+class SystemNode(YAMLObject):
     yaml_tag = '!SystemNode'
 
     def __init__(self, system, name, encrypted, program_code, node_type, node_effect_name, disabled, child_nodes_names):
@@ -65,8 +65,19 @@ class SystemNode(yaml.YAMLObject):
         return {}
 
 
-class System(yaml.YAMLObject):
+class System(YAMLObject):
     yaml_tag = '!System'
+
+    @classmethod
+    def to_yaml(cls, dumper, data):
+        # TODO split graph nodes to files
+        return dumper.represent_yaml_object(cls.yaml_tag, data, cls,
+                                            flow_style=cls.yaml_flow_style)
+
+    @classmethod
+    def from_yaml(cls, loader, node):
+        # TODO gather graph node from files
+        return loader.construct_yaml_object(node, cls)
 
     def __init__(self, name):
         self.name = name
