@@ -206,16 +206,16 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             self.cmd_effect(current_program.inevitable_effect_name, verbose=False)
         print 'finish info'
 
-    def cmd_batch_info(self, *program_codes):
+    def cmd_batch_info(self, *program_codes, **kwargs):
         program_codes = [code.strip(' ,\n') for code in program_codes]
         for program_code in program_codes:
-            self.cmd_info(program_code)
+            self.cmd_info(program_code, kwargs.get('verbose', True))
             sleep(1)
         print 'finish batch_info'
 
-    def cmd_file_info(self, file_name):
+    def cmd_file_info(self, file_name, verbose=False):
         with open(os.path.join(data, file_name)) as f:
-            self.cmd_batch_info(*f.readlines())
+            self.cmd_batch_info(*f.readlines(), verbose=verbose)
 
     def dump_reply_handler(self, message, folder, file_name_getter, parser):
         try:
