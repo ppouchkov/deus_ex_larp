@@ -196,7 +196,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             while self.wait_for_reply:
                 sleep(0.5)
         elif verbose:
-            with open(os.path.exists(os.path.join(current_folder, '#{}'.format(current_code)))) as f:
+            with open(os.path.join(current_folder, '#{}'.format(current_code))) as f:
                 print yaml.load(f)
         with open(os.path.join(current_folder, '#{}'.format(current_code))) as f:
             current_program = yaml.load(f)
