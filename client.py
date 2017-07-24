@@ -204,10 +204,12 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.cmd_effect(current_program.effect_name, verbose=False)
         if current_program.inevitable_effect_name:
             self.cmd_effect(current_program.inevitable_effect_name, verbose=False)
+        print 'finish info'
 
     def cmd_batch_info(self, *program_codes):
         for program_code in program_codes:
             self.cmd_info(program_code)
+        print 'finish batch_info'
 
     def dump_reply_handler(self, message, folder, file_name_getter, parser):
         try:
