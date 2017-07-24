@@ -169,7 +169,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             with open(os.path.exists(os.path.join(current_folder, effect_name))) as f:
                 print yaml.load(f)
 
-    def cmd_info(self, program_code):
+    def cmd_info(self, program_code, verbose=True):
         current_code = None
         current_folder = os.path.join(data, 'programs')
         if isinstance(program_code, basestring) and str(program_code).startswith('#'):
@@ -195,7 +195,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             self.forward_message('info #{}'.format(current_code))
             while self.wait_for_reply:
                 sleep(0.5)
-        else:
+        elif verbose:
             with open(os.path.exists(os.path.join(current_folder, '#{}'.format(current_code)))) as f:
                 print yaml.load(f)
         with open(os.path.exists(os.path.join(current_folder, '#{}'.format(current_code)))) as f:
