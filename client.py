@@ -224,7 +224,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         return message
 
     def cmd_store(self):
-        current_folder = os.path.join(data, self.target.name)
+        if self.target is None:
+            current_folder = data
+        else:
+            current_folder = os.path.join(data, self.target.name)
         with open(os.path.join(current_folder, 'stored_data'), "a") as f:
             f.write("message")
 
