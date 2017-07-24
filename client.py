@@ -207,6 +207,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         print 'finish info'
 
     def cmd_batch_info(self, *program_codes):
+        program_codes = [code.strip(' ,\n') for code in program_codes]
         for program_code in program_codes:
             self.cmd_info(program_code)
         print 'finish batch_info'
