@@ -55,6 +55,17 @@ Effect class: virus.
 END ----------------
 """
 
+effect_analyze = """
+--------------------
+Info about 'analyze' effect:
+
+bla-bla-bla defencive code.
+thousand of bugs inside
+Effect class: system defense.
+
+END ----------------
+"""
+
 command_attack_disable = """
 --------------------
 #3675 programm info:
