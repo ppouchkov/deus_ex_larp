@@ -196,6 +196,12 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         else:
             with open(os.path.exists(os.path.join(current_folder, '#{}'.format(current_code)))) as f:
                 print yaml.load(f)
+        with open(os.path.exists(os.path.join(current_folder, '#{}'.format(current_code)))) as f:
+            current_program = yaml.load(f)
+
+        self.cmd_effect(current_program.effect_name)
+        if current_program.inevitable_effect_name:
+            self.cmd_effect(current_program.inevitable_effect_name)
 
     def dump_reply_handler(self, message, folder, file_name_getter, parser):
         try:
