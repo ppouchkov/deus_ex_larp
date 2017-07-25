@@ -392,7 +392,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def flush_choice(self):
         self.choice_buffer = []
 
-    def cmd_attack_forward(self, system_node, skip_choice=False):
+    def cmd_attack_forward(self, system_node):
         pass
 
     def cmd_parse_diagnostics(self, file_name):
