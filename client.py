@@ -308,10 +308,21 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             self.cmd_info_total(self.target.node_graph[system_node_name].programm_code, verbose=False)
         if self.target.node_graph[system_node_name].node_effect:
             self.cmd_effect(self.target.node_graph[system_node_name].node_effect, verbose=False)
-        self.target.update_from_folder(os.path.join(data, self.target.name), redraw=True)
 
-    def cmd_explore_forward(self, system_node='firewall'):
-        pass
+    def cmd_explore_forward(self, system_node_name='firewall'):
+        assert self.target, 'Specify target'
+        node_buffer = [self.target.node_graph[system_node_name]]
+        elem_visited = set()
+        while node_buffer:
+            current_node = node_buffer.pop(0)
+            if current_node.name in elem_visited:
+                continue
+            self.cmd_explore(current_node.name)
+            elem_visited.add(current_node.name)
+            for child_name in current_node.child_nodes_names:
+                if self.target.node_graph[current_node.name].disabled and \
+                        self.target.node_graph[current_node.name].available:
+                    node_buffer.append(self.target.node_graph[child_name])
 
     def cmd_find_attack(self, system_node):
         pass
