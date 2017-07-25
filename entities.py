@@ -112,6 +112,8 @@ class SystemNode(YAMLObject):
 
     @property
     def program_has_inevitable_effect(self):
+        if self.program_code is None:
+            return None
         program_file_name = os.path.join(data, 'programs', self.program_code)
         with open(program_file_name) as f:
             program = yaml.load(f)

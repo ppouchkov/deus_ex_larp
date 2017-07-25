@@ -35,7 +35,7 @@ def make_command(is_blocking, handler):
                         raise ValueError('Waited too long')
                     sleep(ResendingClient.wait_rate)
             except Exception as e:
-                print 'ERROR: {}'.format(str(e))
+                print 'CMD ERROR: {}'.format(str(e))
         return wrapper
     return wrapped
 
@@ -49,7 +49,7 @@ def make_reply_handler():
                 instance.wait_for_reply = False
                 return result
             except Exception as e:
-                print 'ERROR: {}'.format(str(e))
+                print 'HANDLER ERROR: {}'.format(str(e))
         return wrapper
     return wrapped
 
