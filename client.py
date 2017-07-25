@@ -206,6 +206,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 print 'Cache hit'
                 print yaml.load(f)
 
+    @make_command(is_blocking=True, handler=None)
     def cmd_info(self, program_code, verbose=True):
         current_code = None
         current_folder = os.path.join(data, 'programs')
@@ -228,25 +229,27 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                                          folder=current_folder,
                                          file_name_getter=lambda x: '#{0.code}'.format(x),
                                          parser=parse_program)
-            self.wait_for_reply = True
-            self.forward_message('info #{}'.format(current_code))
-            while self.wait_for_reply:
-                sleep(0.5)
+            return 'info #{}'.format(current_code)
         elif verbose:
             with open(os.path.join(current_folder, '#{}'.format(current_code))) as f:
                 print yaml.load(f)
-        with open(os.path.join(current_folder, '#{}'.format(current_code))) as f:
-            current_program = yaml.load(f)
+        return None
 
-        self.cmd_effect(current_program.effect_name, verbose=False)
+    @make_command(is_blocking=False, handler=None)
+    def cmd_info_total(self, program_code, verbose=True):
+        self.cmd_info(program_code, verbose)
+        with open(os.path.join(data, 'programs', '#{}'.format(program_code))) as f:
+            current_program = yaml.load(f)
+        if current_program.effect_name:
+            self.cmd_effect(current_program.effect_name, verbose=False)
         if current_program.inevitable_effect_name:
             self.cmd_effect(current_program.inevitable_effect_name, verbose=False)
-        print 'finish info {}'.format(current_code)
 
+    @make_command(is_blocking=False, handler=None)
     def cmd_batch_info(self, *program_codes, **kwargs):
         program_codes = [code.strip(' ,\n') for code in program_codes]
         for program_code in program_codes:
-            self.cmd_info(program_code, kwargs.get('verbose', True))
+            self.cmd_info_total(program_code, kwargs.get('verbose', True))
             sleep(1)
         print 'finish batch_info {}'.format(len(program_codes))
 
@@ -264,6 +267,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             return 'ERROR: {}'.format(str(e))
         return message
 
+    @make_command(is_blocking=False, handler=None)
     def cmd_store(self, file_name='stored_data'):
         if self.target is None:
             current_folder = data
