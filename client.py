@@ -11,8 +11,8 @@ import yaml
 
 from check_rule import check_rule
 from config import attacker, node_holder, data
-from entities import System, Program
-from parsers import parse_status, parse_program, parse_effect, parse_node
+from entities import System, Program, AttackReply, SystemNode
+from parsers import parse_status, parse_program, parse_effect, parse_node, parse_attack_reply
 
 
 def make_command(is_blocking, handler):
@@ -23,7 +23,6 @@ def make_command(is_blocking, handler):
                 if is_blocking and not instance.disable_locks:
                     instance.wait_for_reply = True
                 if handler:
-                    print 'call {}'.format(handler)
                     instance.reply_handler = getattr(instance, handler)
                 else:
                     instance.reply_handler = getattr(instance, 'default_reply_handler')
@@ -129,7 +128,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
         message_split = message.split()
         command, args = message_split[0].strip('/'), message_split[1:]
-        if self.choice_buffer:
+        if self.choice_buffer and not command == 'flush_choice':
             try:
                 next_command = self.choice_buffer[int(command)]
                 self.choice_buffer = []
@@ -139,6 +138,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 print 'Flush choice buffer'
                 self.choice_buffer = []
             return
+        elif command == 'flush_choice':
+            self.cmd_flush_choice()
         if hasattr(self, 'cmd_{}'.format(command)):
             getattr(self, 'cmd_{}'.format(command))(*args)
         else:
@@ -316,15 +317,17 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         return result
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_explore(self, system_node_name='firewall'):
+    def cmd_explore(self, system_node_name='firewall', attack=False):
         self.cmd_look(system_node_name)
         if self.target.node_graph[system_node_name].programm_code:
             self.cmd_info_total(self.target.node_graph[system_node_name].programm_code, verbose=False)
         if self.target.node_graph[system_node_name].node_effect:
             self.cmd_effect(self.target.node_graph[system_node_name].node_effect, verbose=False)
+        if attack:
+            self.cmd_attack_choice(system_node_name)
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_explore_forward(self, system_node_name='firewall'):
+    def cmd_explore_recursive(self, system_node_name='firewall'):
         assert self.target, 'Specify target'
         node_buffer = [self.target.node_graph[system_node_name]]
         elem_visited = set()
@@ -353,6 +356,35 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         else:
             print 'WARNING: Attack {} is NOT valid against {}'.format(attack.code, defence.code)
 
+    @make_command(is_blocking=True, handler=None)
+    def cmd_forward_attack(self, attack_code, system_node):
+        self.reply_handler = partial(self.attack_reply_handler, system_node=system_node)
+        self.forward_message('#{} {}'.format(attack_code, system_node))
+
+    @make_reply_handler()
+    def attack_reply_handler(self, message, system_node):
+        attack_reply = parse_attack_reply(message)
+        assert isinstance(attack_reply, AttackReply)
+        current_node = self.target.node_graph[system_node]
+        assert isinstance(current_node, SystemNode)
+        current_node.available = attack_reply.new_available
+        current_node.disabled = attack_reply.new_disabled
+        if attack_reply.new_defence:
+            current_node.program_code = attack_reply.new_defence
+        if attack_reply.success:
+            self.cmd_explore_choice(system_node)
+        return '{}\n{}'.format(message, '\n    - '.join(attack_reply.warning))
+
+    @make_command(is_blocking=False, handler=None)
+    def cmd_explore_choice(self, system_node='firewall'):
+        current_node = self.target.node_graph[system_node]
+        self.choice_buffer.append('/explore_recursive {}'.format(system_node))
+        for child_name in current_node.child_nodes_names:
+            self.choice_buffer.append('/explore {} attack}'.format(child_name))
+        self.choice_buffer.append('/flush_choice')
+        for current_choice, command in enumerate(self.choice_buffer):
+            print '    [{}] {}'.format(current_choice, command)
+
     @make_command(is_blocking=False, handler=None)
     def cmd_attack_choice(self, system_node, effect_filter='all', limit_for_effect=3):
         current_folder = os.path.join(data, 'programs')
@@ -364,7 +396,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             with open(os.path.join(current_folder, program_file)) as f:
                 current_program = yaml.load(f)
                 assert isinstance(current_program, Program)
-                if not current_node.node_type in set(current_program.node_types):
+                if current_node.node_type not in set(current_program.node_types):
                     continue
                 if not check_rule(current_program.code, current_node.program_code):
                     continue
@@ -374,7 +406,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                             if effect_filter == 'all' or effect_filter == effect_name]:
             print 'Effect: {}'.format(effect_name)
             for i in range(min(limit_for_effect, len(result[effect_name]))):
-                next_command = '#{} {}'.format(result[effect_name][i].program_code, system_node)
+                next_command = '/forward_attack {} {}'.format(result[effect_name][i].program_code, system_node)
                 self.choice_buffer.append(next_command)
                 print '    [{}] {}'.format(current_choice, next_command)
                 current_choice += 1
@@ -389,11 +421,13 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         current_choice += 1
 
     @make_command(is_blocking=False, handler=None)
-    def flush_choice(self):
+    def cmd_flush_choice(self):
         self.choice_buffer = []
+        self.wait_for_reply = False
 
-    def cmd_atk(self, system_node):
-        pass
+    @make_command(is_blocking=False, handler=None)
+    def cmd_atk(self, system_node='firewall'):
+        self.cmd_attack_choice(system_node)
 
     def cmd_parse_diagnostics(self, file_name):
         pass

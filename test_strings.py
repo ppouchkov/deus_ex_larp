@@ -1,3 +1,4 @@
+# coding=utf-8
 hacker_proxy_not_set = """
 --------------------
 quentin726 status:
@@ -177,5 +178,46 @@ Installed program: #1019788
 Type: Traffic monitor
 DISABLED for: 572 sec
 Node effect: analyze
+END ----------------
+"""
+
+attack_reply_unavailable = """
+executing program #117 from quentin726 target:LadyInRed5000
+LadyInRed5000/antivirus2 not available
+"""
+
+attack_reply_already_disabled = """
+executing program #242 from quentin726 target:BlackMirror692
+Error 406: node disabled
+"""
+
+attack_reply_success = """
+executing program #4851 from quentin726 target:BlackMirror692
+Node defence: #2294523
+Inevitable effect triggered
+Logname:
+BlackMirror692 security log updated
+attack successfull
+"""
+
+attack_reply_failure = """
+executing program #980 from quentin726 target:BlackMirror692
+Node defence: #43086043
+attack failed
+Trace:
+Proxy level decreased by 1.
+BlackMirror692 security log updated
+"""
+
+attack_reply_get_data_success = u"""
+executing program #20825 from quentin726 target:LadyInRed983
+Node defence: #6393275
+attack successfull
+Data in LadyInRed983/system_information:
+--------------------
+
+LadyInRed is ALICE-based cybersystem for Эш (Ash).
+ALICE ID: 0000
+
 END ----------------
 """

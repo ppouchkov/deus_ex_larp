@@ -1,4 +1,5 @@
 import os
+from collections import namedtuple
 from copy import deepcopy
 
 import yaml
@@ -160,3 +161,6 @@ class System(YAMLObject):
         for elem in edge_buffer:
             dot.edge(*elem)
         dot.render(self.name, folder_name, view)
+
+
+AttackReply = namedtuple('AttackReply', ['success', 'new_defence', 'new_available', 'new_disabled', 'warning'])

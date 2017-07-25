@@ -3,7 +3,7 @@ import re
 import yaml
 
 import test_strings
-from entities import Status, Program, Effect, SystemNode
+from entities import Status, Program, Effect, SystemNode, AttackReply
 
 
 def search_string(pattern, input_str, none_value=None):
@@ -81,3 +81,28 @@ def parse_node(input_string):
         SystemNode(system, name, encrypted, program_code, node_type, node_effect_name, disabled, child_nodes_names, available),
         [(name, child_name) for child_name in child_nodes_names]
     )
+
+
+def parse_attack_reply(input_string):
+    unavailable = search_string("(not available)", input_string) is not None
+    already_disabled = search_string("(Error .*? node disabled)", input_string) is not None
+    success = search_string("(attack successful)", input_string) is not None
+    disabled = search_string("(Node .*? disabled for)", input_string) is not None
+    failure = search_string("(attack failed)", input_string) is not None
+    node_defence = search_string("Node defence: #(\d+)", input_string)
+    warnings = [elem for elem in [
+        search_string("(security log updated)", input_string),
+        search_string("(Proxy level decreased by 1)", input_string),
+        search_string("(Inevitable effect triggered)", input_string),
+    ] if elem is not None]
+
+    return AttackReply(
+        success=(success and not failure and not unavailable or already_disabled),
+        new_defence=int(node_defence or 0),
+        new_available=not unavailable,
+        new_disabled=already_disabled or disabled,
+        warning=warnings
+    )
+
+
+
