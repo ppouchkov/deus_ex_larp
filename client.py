@@ -383,7 +383,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 self.choice_buffer.append(next_command)
                 print '    [{}] {}'.format(current_choice, next_command)
                 current_choice += 1
-        next_command = '/flush_choice {} {}'.format(system_node, effect_name, len(result[effect_name]))
+        next_command = '/flush_choice'
         self.choice_buffer.append(next_command)
         print '    [{}] {}'.format(current_choice, next_command)
         current_choice += 1
