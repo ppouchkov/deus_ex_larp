@@ -156,3 +156,26 @@ MountainOfLight/forewall not available
 
 END ----------------
 """
+
+node_firewall = """
+--------------------
+Node "BlackMirror692/firewall" properties:
+Installed program: #7993700
+Type: Firewall
+DISABLED for: 241 sec
+Node effect: trace
+Child nodes:
+0: traffic_monitor1 (Traffic monitor): #1019788
+
+END ----------------
+"""
+
+node_traffic_monitor_1 = """
+--------------------
+Node "BlackMirror692/traffic_monitor1" properties:
+Installed program: #1019788
+Type: Traffic monitor
+DISABLED for: 572 sec
+Node effect: analyze
+END ----------------
+"""

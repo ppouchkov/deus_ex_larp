@@ -49,7 +49,7 @@ def parse_node_from_short_string(input_string, system):
     node_type = search_string("\w+ \((.*?)\)", input_string)
     encrypted = search_string("(\*encrypted\*)", input_string) is not None
     program_code = int(search_string("#(\d+)", input_string) or 0)
-    disabled = search_string("DISABLED", input_string) is not None
+    disabled = search_string("(DISABLED)", input_string) is not None
     child_nodes_names = []
     child_nodes_names_str = search_string('"Child nodes: *\[(.*?)\]', input_string)
     if child_nodes_names_str:
@@ -74,6 +74,7 @@ def parse_node(input_string):
     node_type = search_string("""Type: (.+?)\n""", input_string)
     node_effect_name = search_string("""Node effect: (.+?)\n""", input_string)
     child_nodes_names = [str(elem).strip() for elem in re.findall("\d+: (.+?)\(", input_string)]
+    disabled = search_string("(DISABLED for:)", input_string) is not None
     # child_nodes_short_strings = [str(elem).strip() for elem in re.findall("\d+: (.+?)\n", input_string)]
 
     return (

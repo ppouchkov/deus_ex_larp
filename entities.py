@@ -126,7 +126,6 @@ class System(YAMLObject):
             if elem.startswith(self.name):
                 continue
             with open(os.path.join(folder_name, elem)) as f:
-                print os.path.join(folder_name, elem)
                 self.add_node(yaml.load(f))
         if redraw:
             self.draw(folder_name)
