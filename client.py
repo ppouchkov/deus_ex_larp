@@ -302,6 +302,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.target.draw('{}/{}'.format(data, self.target.name), view=False)
         return result
 
+    @make_command(is_blocking=False, handler=None)
     def cmd_explore(self, system_node_name='firewall'):
         self.cmd_look(system_node_name)
         if self.target.node_graph[system_node_name].programm_code:
