@@ -6,7 +6,6 @@ from collections import deque
 from functools import partial
 from time import sleep
 
-import re
 import sleekxmpp
 import yaml
 
@@ -15,9 +14,55 @@ from entities import System
 from parsers import parse_status, parse_program, parse_effect, parse_node
 
 
+def make_command(is_blocking, handler):
+    def wrapped(command_method):
+        def wrapper(instance, *args, **kwargs):
+            try:
+                assert isinstance(instance, ResendingClient)
+                if is_blocking and not instance.disable_locks:
+                    instance.wait_for_reply = True
+                if handler:
+                    print 'call {}'.format(handler)
+                    instance.reply_handler = getattr(instance, handler)
+                else:
+                    instance.reply_handler = getattr(instance, 'default_reply_handler')
+                message = command_method(instance, *args, **kwargs)
+                if message:
+                    instance.forward_message(message)
+                wait_start = datetime.datetime.now()
+                while instance.wait_for_reply:
+                    if datetime.datetime.now() > wait_start + datetime.timedelta(seconds=ResendingClient.wait_for_reply_max):
+                        raise ValueError('Waited too long')
+                    sleep(ResendingClient.wait_rate)
+            except Exception as e:
+                print 'ERROR: {}'.format(str(e))
+        return wrapper
+    return wrapped
+
+
+def make_reply_handler():
+    def wrapped(handler_method):
+        def wrapper(instance, message, **kwargs):
+            try:
+                assert isinstance(instance, ResendingClient)
+                result = handler_method(instance, message, **kwargs)
+                instance.wait_for_reply = False
+                return result
+            except Exception as e:
+                print 'ERROR: {}'.format(str(e))
+        return wrapper
+    return wrapped
+
+
 class ResendingClient(sleekxmpp.ClientXMPP):
     greeting_message = 'The very first test {}'.format(datetime.datetime.now())
     sending_delay = datetime.timedelta(seconds=1)
+
+    disable_locks = False
+
+    wait_for_reply = False
+    wait_for_reply_max = 60
+    wait_rate = 0.5
 
     @classmethod
     def _is_internal_command(cls, input_str):
@@ -45,7 +90,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.output_buffer = deque([], 5)
 
         self.reply_handler = self.default_reply_handler
-        self.wait_for_reply = False
 
         self.current = None
         self.target = None
@@ -99,31 +143,19 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         print 'disconnect'
         self.disconnect(wait=True)
 
+    @make_command(is_blocking=False, handler=None)
     def cmd_repeat(self, i=None):
-        try:
-            message = self.input_buffer[i and int(i) or 1]
-            print '/repeat: {}'.format(message)
-            self.forward_message(message)
-        except IndexError:
-            print '/repeat: ERROR empty buffer'
-        except ValueError:
-            print '/repeat: ERROR index should be integer'
+        message = self.input_buffer[i and int(i) or 1]
+        print '/repeat: {}'.format(message)
+        return message
 
+    @make_command(is_blocking=True, handler=None)
     def cmd_target(self, system):
-        try:
-            assert system, 'Specify system name'
+        assert system, 'Specify system name'
+        self.reply_handler = partial(self.target_reply_handler, target_name=system)
+        return 'target {}'.format(system)
 
-            self.reply_handler = partial(self.target_reply_handler, target_name=system)
-            self.wait_for_reply = True
-
-            self.forward_message('target {}'.format(system))
-
-            while self.wait_for_reply:
-                sleep(0.5)
-
-        except Exception as e:
-            print str(e)
-
+    @make_reply_handler()
     def target_reply_handler(self, message, target_name):
         target_folder = os.path.join(data, target_name)
         if message.strip() != 'ok':
@@ -134,41 +166,44 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.target.update_from_folder(target_folder)
         return 'new target: {}'.format(target_name)
 
-    def cmd_draw(self, view=True):
-        if self.target:
-            target_folder = '{}/{}'.format(data, self.target.name)
-            self.target.draw(target_folder, view)
+    @make_command(is_blocking=False, handler=None)
+    def cmd_draw(self, system=None, view=True):
+        if system:
+            target = System(system)
+            target.update_from_folder('{}/{}'.format(data, system))
+        else:
+            target = self.target
+        if target:
+            target_folder = '{}/{}'.format(data, target.name)
+            target.draw(target_folder, view)
+            return 'Draw: ok'
+        return 'Specify target'
 
+    @make_command(is_blocking=True, handler='status_reply_handler')
     def cmd_status(self):
-        self.reply_handler = self.status_reply_handler
-        self.wait_for_reply = True
+        return 'status'
 
-        self.forward_message('status')
-        while self.wait_for_reply:
-            sleep(0.5)
-
+    @make_reply_handler()
     def status_reply_handler(self, message):
         self.current = parse_status(message)
-        self.wait_for_reply = False
         return str(self.current)
 
+    @make_command(is_blocking=True, handler=None)
     def cmd_effect(self, effect_name, verbose=True):
         current_folder = os.path.join(data, 'effects')
         if not os.path.exists(current_folder):
             print 'create folder {}'.format(current_folder)
             os.mkdir(current_folder)
-
         if not os.path.exists(os.path.join(current_folder, effect_name)):
+            print 'Cache miss'
             self.reply_handler = partial(self.dump_reply_handler,
                                          folder=current_folder,
                                          file_name_getter=lambda x: '{0.name}'.format(x),
                                          parser=parse_effect)
-            self.wait_for_reply = True
-            self.forward_message('info #{}'.format(effect_name))
-            while self.wait_for_reply:
-                sleep(0.5)
+            return 'effect {}'.format(effect_name)
         elif verbose:
-            with open(os.path.exists(os.path.join(current_folder, effect_name))) as f:
+            with open(os.path.join(current_folder, effect_name)) as f:
+                print 'Cache hit'
                 print yaml.load(f)
 
     def cmd_info(self, program_code, verbose=True):
@@ -219,15 +254,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         with open(os.path.join(data, file_name)) as f:
             self.cmd_batch_info(*f.readlines(), verbose=verbose)
 
+    @make_reply_handler()
     def dump_reply_handler(self, message, folder, file_name_getter, parser):
         try:
             obj = parser(message)
             with open(os.path.join(folder, file_name_getter(obj)), 'w') as f:
                 yaml.dump(obj, f, default_style='|')
         except Exception as e:
-            print str(e)
-            return 'ERROR'
-        self.wait_for_reply = False
+            return 'ERROR: {}'.format(str(e))
         return message
 
     def cmd_store(self, file_name='stored_data'):
