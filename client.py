@@ -186,7 +186,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             target_folder = '{}/{}'.format(data, target.name)
             target.draw(target_folder, view)
             return 'Draw: ok'
-        return 'Specify target'
+        print 'Specify target'
 
     @make_command(is_blocking=True, handler='status_reply_handler')
     def cmd_status(self):
