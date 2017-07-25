@@ -110,7 +110,11 @@ class SystemNode(YAMLObject):
 
     @property
     def graphviz_style_dict(self):
-        return {}
+        color, shape = None, None
+        # shape = 'signature' if len(current_node.child_nodes) == 0 else 'oval',
+        # style = 'filled',
+        # fillcolor = current_node.name == 'firewall' and 'red' or 'none',
+        return dict(shape=shape, style='filled', fillcolor=color)
 
 
 class System(YAMLObject):

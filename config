@@ -1,5 +1,11 @@
 [global]
 data_folder=data
+loot_node_types=
+    Data
+    Administrative interface
+    Bank account
+    Finance
+    Corporate HQ
 
 [attacker]
 jid=bravo_deus_ex_larp@jabber.ru

@@ -21,3 +21,7 @@ node_holder = JabberUser(
 )
 
 data = config_parser.get('global', 'data_folder')
+
+loot_node_types = set(node_type.strip() for node_type
+                      in str(config_parser.get('global', 'loot_node_types')).splitlines()
+                      if node_type)
