@@ -280,33 +280,27 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         except IOError as (errno, strerror):
             print "I/O error({0}): {1}".format(errno, strerror)
 
+    @make_command(is_blocking=True, handler='look_reply_handler')
     def cmd_look(self, system_node_name):
         if self.target is None:
             print 'Specify target'
-            return
-        self.reply_handler = self.look_reply_handler
-        self.wait_for_reply = True
+            return None
+        return 'look {}'.format(system_node_name)
 
-        self.forward_message('look {}'.format(system_node_name))
-
-        while self.wait_for_reply:
-            sleep(0.5)
-
-        self.target.update_from_folder('{}/{}'.format(data, self.target.name))
-        self.target.draw('{}/{}'.format(data, self.target.name), view=False)
-
+    @make_reply_handler()
     def look_reply_handler(self, message):
         system_node, _ = parse_node(message)
         if self.target.name != system_node.system:
-            self.wait_for_reply = False
             return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.system)
-
-        return self.dump_reply_handler(
+        result = self.dump_reply_handler(
             message,
             '{}/{}'.format(data, self.target.name),
             lambda obj: obj.name,
             lambda m: parse_node(m)[0]
         )
+        self.target.update_from_folder('{}/{}'.format(data, self.target.name))
+        self.target.draw('{}/{}'.format(data, self.target.name), view=False)
+        return result
 
     def cmd_explore(self, system_node_name='firewall'):
         self.cmd_look(system_node_name)
