@@ -5,6 +5,8 @@ from copy import deepcopy
 import yaml
 from graphviz import Digraph
 
+from config import loot_node_types, data
+
 
 class YAMLObject(yaml.YAMLObject):
     hidden_fields = []
@@ -109,11 +111,23 @@ class SystemNode(YAMLObject):
         self.available = available
 
     @property
+    def program_has_inevitable_effect(self):
+        program_file_name = os.path.join(data, 'programs', self.program_code)
+        with open(program_file_name) as f:
+            program = yaml.load(f)
+        return program.inevitable_effect_name is not None
+
+    @property
     def graphviz_style_dict(self):
-        color, shape = None, None
-        # shape = 'signature' if len(current_node.child_nodes) == 0 else 'oval',
-        # style = 'filled',
-        # fillcolor = current_node.name == 'firewall' and 'red' or 'none',
+        shape = self.node_type in loot_node_types and 'signature' or 'oval'
+        if not self.available:
+            color = 'grey'
+        elif self.disabled:
+            color = 'green'
+        elif self.node_effect_name or self.program_has_inevitable_effect:
+            color = 'red'
+        else:
+            color = 'white'
         return dict(shape=shape, style='filled', fillcolor=color)
 
 
