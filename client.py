@@ -353,7 +353,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=True, handler=None)
     def cmd_forward_attack(self, attack_code, system_node):
         self.reply_handler = partial(self.attack_reply_handler, system_node=system_node)
-        self.forward_message('#{} {}'.format(attack_code, system_node))
+        return '#{} {}'.format(attack_code, system_node)
 
     @make_reply_handler()
     def attack_reply_handler(self, message, system_node):
