@@ -315,6 +315,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def cmd_explore_forward(self, system_node='firewall'):
         pass
 
+    def cmd_find_attack(self, system_node):
+        pass
+
     def cmd_attack(self, system_node, program_code=None, skip_choice=False):
         pass
 
