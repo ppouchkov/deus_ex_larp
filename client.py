@@ -9,8 +9,9 @@ from time import sleep
 import sleekxmpp
 import yaml
 
+from check_rule import check_rule
 from config import attacker, node_holder, data
-from entities import System
+from entities import System, Program
 from parsers import parse_status, parse_program, parse_effect, parse_node
 
 
@@ -88,6 +89,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.recipient = node_holder.jid
         self.input_buffer = deque([], 5)
         self.output_buffer = deque([], 5)
+        self.choice_buffer = []
 
         self.reply_handler = self.default_reply_handler
 
@@ -324,8 +326,32 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                         self.target.node_graph[current_node.name].available:
                     node_buffer.append(self.target.node_graph[child_name])
 
-    def cmd_find_attack(self, system_node):
-        pass
+    @make_command(is_blocking=False, handler=None)
+    def cmd_find_attack(self, system_node, effect_filter='all', limit_for_effect=3):
+        current_folder = os.path.join(data, 'programs')
+        current_node = self.target.node_graph[system_node]
+        result = {}
+        for program_file in os.listdir(current_folder):
+            if not program_file.startswith('#'):
+                continue
+            with open(os.path.join(current_folder, program_file)) as f:
+                current_program = yaml.load(f)
+                assert isinstance(current_program, Program)
+                if check_rule(current_program.code, current_node.program_code):
+                    result.setdefault(current_program.effect_name, []).append(current_program)
+        current_choice = 0
+        for effect_name in [effect_name for effect_name in result if effect_filter == 'all' or effect_filter == effect_name]:
+            print 'Effect: {}'.format(effect_name)
+            for i in range(min(limit_for_effect, len(result[effect_name]))):
+                next_command = '#{} {}'.format(result[effect_name][i].program_code, system_node)
+                self.choice_buffer.append(next_command)
+                print '    [{}] {}'.format(current_choice, next_command)
+                current_choice += 1
+            if limit_for_effect < len(result[effect_name]):
+                next_command = '/find_attack {} {}'.format(system_node, effect_name, len(result[effect_name]))
+                self.choice_buffer.append(next_command)
+                print '    [{}] {}'.format(current_choice, next_command)
+                current_choice += 1
 
     def cmd_attack(self, system_node, program_code=None, skip_choice=False):
         pass
