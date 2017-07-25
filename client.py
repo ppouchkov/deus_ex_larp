@@ -323,6 +323,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if self.target.node_graph[system_node_name].node_effect:
             self.cmd_effect(self.target.node_graph[system_node_name].node_effect, verbose=False)
 
+    @make_command(is_blocking=False, handler=None)
     def cmd_explore_forward(self, system_node_name='firewall'):
         assert self.target, 'Specify target'
         node_buffer = [self.target.node_graph[system_node_name]]
