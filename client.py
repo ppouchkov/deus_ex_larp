@@ -168,7 +168,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def target_reply_handler(self, message, target_name):
         target_folder = os.path.join(data, target_name)
         if message.strip() != 'ok':
-            return ' target failed with message: {}'.format(message)
+            return ' target failed with message:\n{}'.format(message)
         if not os.path.exists(target_folder):
             os.mkdir(target_folder)
         self.target = System(target_name)
