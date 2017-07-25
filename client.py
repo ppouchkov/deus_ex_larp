@@ -125,8 +125,19 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if not self._is_internal_command(message):
             self.send_message(self.recipient, message, mtype='chat')
             return
+
         message_split = message.split()
         command, args = message_split[0].strip('/'), message_split[1:]
+        if self.choice_buffer:
+            try:
+                next_command = self.choice_buffer[int(command)]
+                self.choice_buffer = []
+                self.forward_message(next_command)
+            except Exception as e:
+                print 'ERROR parsing choice {}: {}'.format(message, str(e))
+                print 'Flush choice buffer'
+                self.choice_buffer = []
+            return
         if hasattr(self, 'cmd_{}'.format(command)):
             getattr(self, 'cmd_{}'.format(command))(*args)
         else:
