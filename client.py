@@ -124,6 +124,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             sleep(delta)
         if not self._is_internal_command(message):
             self.send_message(self.recipient, message, mtype='chat')
+            self.last_command_sent = datetime.datetime.now()
             return
 
         message_split = message.split()
