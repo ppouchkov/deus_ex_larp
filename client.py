@@ -270,8 +270,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             lambda m: parse_node(m)[0]
         )
 
-    def cmd_explore(self, system_node='firewall'):
-        pass
+    def cmd_explore(self, system_node_name='firewall'):
+        self.cmd_look(system_node_name)
+        if self.target.node_graph[system_node_name].programm_code:
+            self.cmd_info(self.target.node_graph[system_node_name].programm_code, verbose=False)
+        if self.target.node_graph[system_node_name].node_effect:
+            self.cmd_effect(self.target.node_graph[system_node_name].node_effect, verbose=False)
+        self.target.update_from_folder(os.path.join(data, self.target.name))
+        self.target.draw(os.path.join(data, self.target.name))
 
     def cmd_explore_forward(self, system_node='firewall'):
         pass
