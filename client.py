@@ -344,10 +344,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         current_folder = os.path.join(data, 'programs')
         current_attack_code = str(attack_code).isdigit() and '#{}'.format(attack_code) or attack_code
         current_defence_code = str(defence_code).isdigit() and '#{}'.format(defence_code) or defence_code
-        with open(os.path.join(current_folder, current_attack_code)) as f:
-            attack = yaml.load(f)
-        with open(os.path.join(current_folder, current_defence_code)) as f:
-            defence = yaml.load(f)
+        with open(os.path.join(current_folder, current_attack_code)) as fa:
+            attack = yaml.load(fa)
+        with open(os.path.join(current_folder, current_defence_code)) as fd:
+            defence = yaml.load(fd)
         if check_rule(attack.code, defence.code):
             print 'Attack {} is valid against {}'.format(attack.code, defence.code)
         else:
