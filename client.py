@@ -31,7 +31,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 break
         print 'Reader exited'
 
-    def __init__(self):
+    def __init__(self, start=True):
         sleekxmpp.ClientXMPP.__init__(self, attacker.jid, attacker.pwd)
         self.register_plugin('xep_0030')  # Service Discovery
         self.register_plugin('xep_0199')  # XMPP Ping
@@ -50,6 +50,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.current = None
         self.target = None
 
+        if start:
+            self.start()
+
+    def start(self):
         if self.connect():
             self.process(block=True)
             print("Done")
