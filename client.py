@@ -95,17 +95,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def default_reply_handler(cls, message):
         return message
 
-    def match_pattern_reply_handler(self, message, pattern):
-        try:
-            assert re.match(pattern, message), \
-                'reply pattern mismatch, expected: {}'.format(pattern.pattern)
-        except Exception as e:
-            print str(e)
-        finally:
-            self.reply_handler = self.default_reply_handler
-            self.wait_for_reply = False
-        return message
-
     def close(self):
         print 'disconnect'
         self.disconnect(wait=True)
@@ -124,12 +113,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         try:
             assert system, 'Specify system name'
 
-            target_folder = '{}/{}'.format(data, system)
-            if not os.path.exists(target_folder):
-                os.mkdir(target_folder)
-                self.target = System(system)
-
-            self.reply_handler = partial(self.match_pattern_reply_handler, pattern="ok")
+            self.reply_handler = partial(self.target_reply_handler, target_name=system)
             self.wait_for_reply = True
 
             self.forward_message('target {}'.format(system))
@@ -139,6 +123,16 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
         except Exception as e:
             print str(e)
+
+    def target_reply_handler(self, message, target_name):
+        target_folder = os.path.join(data, target_name)
+        if message.strip() != 'ok':
+            return ' target failed with message: {}'.format(message)
+        if not os.path.exists(target_folder):
+            os.mkdir(target_folder)
+        self.target = System(target_name)
+        self.target.update_from_folder(target_folder)
+        return 'new target: {}'.format(target_name)
 
     def cmd_draw(self, view=True):
         if self.target:
@@ -264,16 +258,16 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.target.draw('{}/{}'.format(data, self.target.name), view=False)
 
     def look_reply_handler(self, message):
-        system_node = parse_node(message)
+        system_node, _ = parse_node(message)
         if self.target.name != system_node.system:
             self.wait_for_reply = False
-            return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.name)
+            return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.system)
 
         return self.dump_reply_handler(
             message,
             '{}/{}'.format(data, self.target.name),
             lambda obj: obj.name,
-            parse_node
+            lambda m: parse_node(m)[0]
         )
 
     def cmd_explore(self, system_node='firewall'):

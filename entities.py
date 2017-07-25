@@ -121,10 +121,15 @@ class System(YAMLObject):
 
     def update_from_folder(self, folder_name, redraw=True):
         for elem in os.listdir(folder_name):
+            if not os.path.isfile(os.path.join(folder_name, elem)):
+                continue
+            if elem.startswith(self.name):
+                continue
             with open(os.path.join(folder_name, elem)) as f:
+                print os.path.join(folder_name, elem)
                 self.add_node(yaml.load(f))
         if redraw:
-            self.draw()
+            self.draw(folder_name)
 
     def add_node(self, new_node):
         current_node = self.node_graph.setdefault(new_node.name, new_node)
