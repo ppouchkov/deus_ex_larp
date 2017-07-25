@@ -306,7 +306,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def cmd_explore(self, system_node_name='firewall'):
         self.cmd_look(system_node_name)
         if self.target.node_graph[system_node_name].programm_code:
-            self.cmd_info(self.target.node_graph[system_node_name].programm_code, verbose=False)
+            self.cmd_info_total(self.target.node_graph[system_node_name].programm_code, verbose=False)
         if self.target.node_graph[system_node_name].node_effect:
             self.cmd_effect(self.target.node_graph[system_node_name].node_effect, verbose=False)
         self.target.update_from_folder(os.path.join(data, self.target.name))
