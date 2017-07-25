@@ -62,7 +62,6 @@ def parse_node_from_short_string(input_string, system):
 
 
 def parse_node(input_string):
-    system, name, encrypted, program_code, node_type, node_effect_name, disabled, child_nodes_names, available = [None, ] * 9
     if search_string("(not available)", input_string):
         system = search_string("(.*?)/.*? not available", input_string)
         name = search_string(".*?/(.*?) not available", input_string)
