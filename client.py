@@ -172,14 +172,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if not os.path.exists(target_folder):
             os.mkdir(target_folder)
         self.target = System(target_name)
-        self.target.update_from_folder(target_folder, redraw=False)
+        self.target.update_from_folder(target_folder, redraw=True)
         return 'new target: {}'.format(target_name)
 
     @make_command(is_blocking=False, handler=None)
     def cmd_draw(self, system=None, view=True):
         if system:
             target = System(system)
-            target.update_from_folder('{}/{}'.format(data, system), redraw=False)
+            target.update_from_folder('{}/{}'.format(data, system), redraw=True)
         else:
             target = self.target
         if target:
@@ -274,6 +274,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 yaml.dump(obj, f, default_style='|')
         except Exception as e:
             return 'ERROR: {}'.format(str(e))
+        if self.target:
+            target_folder = os.path.join(data, self.target.name)
+            self.target.update_from_folder(target_folder, redraw=True)
         return message
 
     @make_command(is_blocking=False, handler=None)
@@ -301,7 +304,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         system_node, _ = parse_node(message)
         if self.target.name != system_node.system:
             return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.system)
-        self.target.add_node(system_node)
         result = self.dump_reply_handler(
             message,
             '{}/{}'.format(data, self.target.name),
