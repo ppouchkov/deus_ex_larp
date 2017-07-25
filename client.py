@@ -354,7 +354,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             print 'WARNING: Attack {} is NOT valid against {}'.format(attack.code, defence.code)
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_attack(self, system_node, effect_filter='all', limit_for_effect=3):
+    def cmd_attack_choice(self, system_node, effect_filter='all', limit_for_effect=3):
         current_folder = os.path.join(data, 'programs')
         current_node = self.target.node_graph[system_node]
         result = {}
@@ -392,7 +392,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def flush_choice(self):
         self.choice_buffer = []
 
-    def cmd_attack_forward(self, system_node):
+    def cmd_atk(self, system_node):
         pass
 
     def cmd_parse_diagnostics(self, file_name):
