@@ -292,13 +292,13 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         system_node, _ = parse_node(message)
         if self.target.name != system_node.system:
             return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.system)
+        self.target.add_node(system_node)
         result = self.dump_reply_handler(
             message,
             '{}/{}'.format(data, self.target.name),
             lambda obj: obj.name,
             lambda m: parse_node(m)[0]
         )
-        self.target.update_from_folder('{}/{}'.format(data, self.target.name), redraw=True)
         return result
 
     @make_command(is_blocking=False, handler=None)
