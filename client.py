@@ -163,14 +163,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if not os.path.exists(target_folder):
             os.mkdir(target_folder)
         self.target = System(target_name)
-        self.target.update_from_folder(target_folder)
+        self.target.update_from_folder(target_folder, redraw=False)
         return 'new target: {}'.format(target_name)
 
     @make_command(is_blocking=False, handler=None)
     def cmd_draw(self, system=None, view=True):
         if system:
             target = System(system)
-            target.update_from_folder('{}/{}'.format(data, system))
+            target.update_from_folder('{}/{}'.format(data, system), redraw=False)
         else:
             target = self.target
         if target:
@@ -298,8 +298,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             lambda obj: obj.name,
             lambda m: parse_node(m)[0]
         )
-        self.target.update_from_folder('{}/{}'.format(data, self.target.name))
-        self.target.draw('{}/{}'.format(data, self.target.name), view=False)
+        self.target.update_from_folder('{}/{}'.format(data, self.target.name), redraw=True)
         return result
 
     @make_command(is_blocking=False, handler=None)
@@ -309,8 +308,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             self.cmd_info_total(self.target.node_graph[system_node_name].programm_code, verbose=False)
         if self.target.node_graph[system_node_name].node_effect:
             self.cmd_effect(self.target.node_graph[system_node_name].node_effect, verbose=False)
-        self.target.update_from_folder(os.path.join(data, self.target.name))
-        self.target.draw(os.path.join(data, self.target.name))
+        self.target.update_from_folder(os.path.join(data, self.target.name), redraw=True)
 
     def cmd_explore_forward(self, system_node='firewall'):
         pass
