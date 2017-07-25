@@ -244,14 +244,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         except IOError as (errno, strerror):
             print "I/O error({0}): {1}".format(errno, strerror)
 
-    def cmd_look(self, system_node):
+    def cmd_look(self, system_node_name):
         if self.target is None:
             print 'Specify target'
             return
         self.reply_handler = self.look_reply_handler
         self.wait_for_reply = True
 
-        self.forward_message('look {}'.format(system_node))
+        self.forward_message('look {}'.format(system_node_name))
 
         while self.wait_for_reply:
             sleep(0.5)
