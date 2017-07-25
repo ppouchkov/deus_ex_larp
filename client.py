@@ -158,12 +158,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         print 'disconnect'
         self.disconnect(wait=True)
 
-    @make_command(is_blocking=False, handler=None)
-    def cmd_repeat(self, i=None):
-        message = self.input_buffer[i and int(i) or 1]
-        print '/repeat: {}'.format(message)
-        return message
-
     @make_command(is_blocking=True, handler=None)
     def cmd_target(self, system):
         assert system, 'Specify system name'
