@@ -340,7 +340,21 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                     node_buffer.append(self.target.node_graph[child_name])
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_find_attack(self, system_node, effect_filter='all', limit_for_effect=3):
+    def cmd_check_attack(self, attack_code, defence_code):
+        current_folder = os.path.join(data, 'programs')
+        current_attack_code = str(attack_code).isdigit() and '#{}'.format(attack_code) or attack_code
+        current_defence_code = str(defence_code).isdigit() and '#{}'.format(defence_code) or defence_code
+        with open(os.path.join(current_folder, current_attack_code)) as f:
+            attack = yaml.load(f)
+        with open(os.path.join(current_folder, current_defence_code)) as f:
+            defence = yaml.load(f)
+        if check_rule(attack.code, defence.code):
+            print 'Attack {} is valid against {}'.format(attack.code, defence.code)
+        else:
+            print 'WARNING: Attack {} is NOT valid against {}'.format(attack.code, defence.code)
+
+    @make_command(is_blocking=False, handler=None)
+    def cmd_attack(self, system_node, effect_filter='all', limit_for_effect=3):
         current_folder = os.path.join(data, 'programs')
         current_node = self.target.node_graph[system_node]
         result = {}
@@ -350,8 +364,11 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             with open(os.path.join(current_folder, program_file)) as f:
                 current_program = yaml.load(f)
                 assert isinstance(current_program, Program)
-                if check_rule(current_program.code, current_node.program_code):
-                    result.setdefault(current_program.effect_name, []).append(current_program)
+                if not current_node.node_type in set(current_program.node_types):
+                    continue
+                if not check_rule(current_program.code, current_node.program_code):
+                    continue
+                result.setdefault(current_program.effect_name, []).append(current_program)
         current_choice = 0
         for effect_name in [effect_name for effect_name in result if effect_filter == 'all' or effect_filter == effect_name]:
             print 'Effect: {}'.format(effect_name)
@@ -365,9 +382,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 self.choice_buffer.append(next_command)
                 print '    [{}] {}'.format(current_choice, next_command)
                 current_choice += 1
+        next_command = '/flush_choice {} {}'.format(system_node, effect_name, len(result[effect_name]))
+        self.choice_buffer.append(next_command)
+        print '    [{}] {}'.format(current_choice, next_command)
+        current_choice += 1
 
-    def cmd_attack(self, system_node, program_code=None, skip_choice=False):
-        pass
+    @make_command(is_blocking=False, handler=None)
+    def flush_choice(self):
+        self.choice_buffer = []
 
     def cmd_attack_forward(self, system_node, skip_choice=False):
         pass
