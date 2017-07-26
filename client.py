@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import datetime
+import logging
 import os
 from collections import deque
 from functools import partial
@@ -35,7 +36,7 @@ def make_command(is_blocking, handler):
                         raise ValueError('Waited too long')
                     sleep(ResendingClient.wait_rate)
             except Exception as e:
-                print 'CMD ERROR: {}'.format(str(e))
+                logging.exception('CMD ERROR: {}'.format(str(e)))
         return wrapper
     return wrapped
 
@@ -114,6 +115,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.forward_message(self.greeting_message)
 
     def forward_message(self, message):
+        logging.info(message)
         if message == '/exit':
             self.close()
             return
@@ -241,6 +243,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                                          parser=parse_program)
             return 'info #{}'.format(current_code)
         elif verbose:
+            logging.info('cached #{} '.format(program_code))
             with open(os.path.join(current_folder, '#{}'.format(current_code))) as f:
                 print yaml.load(f)
         return None
@@ -316,10 +319,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=False, handler=None)
     def cmd_explore(self, system_node_name='firewall', attack=False):
         self.cmd_look(system_node_name)
-        if self.target.node_graph[system_node_name].programm_code:
-            self.cmd_info_total(self.target.node_graph[system_node_name].programm_code, verbose=False)
-        if self.target.node_graph[system_node_name].node_effect:
-            self.cmd_effect(self.target.node_graph[system_node_name].node_effect, verbose=False)
+        if self.target.node_graph[system_node_name].program_code:
+            self.cmd_info_total(self.target.node_graph[system_node_name].program_code, verbose=False)
+        if self.target.node_graph[system_node_name].node_effect_name:
+            self.cmd_effect(self.target.node_graph[system_node_name].node_effect_name, verbose=False)
         if attack:
             self.cmd_attack_choice(system_node_name)
 
@@ -374,8 +377,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     @make_command(is_blocking=False, handler=None)
     def cmd_explore_choice(self, system_node='firewall'):
+        logging.info('/explore_choice {}'.format(system_node))
         current_node = self.target.node_graph[system_node]
-        self.choice_buffer.append('/explore {} attack}'.format(system_node))
+        self.choice_buffer.append('/explore {} attack'.format(system_node))
         for child_name in current_node.child_nodes_names:
             self.choice_buffer.append('/explore {} attack}'.format(child_name))
         self.choice_buffer.append('/flush_choice')
