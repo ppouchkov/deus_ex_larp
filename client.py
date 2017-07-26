@@ -307,6 +307,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if self.target:
             target_folder = os.path.join(data, self.target.name)
             self.target.update_from_folder(target_folder, redraw=True)
+            for elem in self.target.node_graph.itervalues():
+                print elem.name, elem.program_code
         return message
 
     @make_command(is_blocking=True, handler='look_reply_handler')
