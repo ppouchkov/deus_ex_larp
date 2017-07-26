@@ -173,6 +173,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             os.mkdir(target_folder)
         self.target = System(target_name)
         self.target.update_from_folder(target_folder, redraw=True)
+        self.cmd_explore_choice()
         return 'new target: {}'.format(target_name)
 
     @make_command(is_blocking=False, handler=None)

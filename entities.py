@@ -236,8 +236,8 @@ class TestSystemNode(SystemNode):
     {0.name} (0.node_type): {0.program_code} DISABLED
     """.strip()
 
-    def __init__(self, system, name, encrypted, program_code, node_type, node_effect_name, disabled, child_nodes_names,
-                 available):
+    def __init__(self, system, name, encrypted=None, program_code=None, node_type=None, node_effect_name=None, disabled=None, child_nodes_names=None,
+                 available=None):
         super(TestSystemNode, self).__init__(system, name, encrypted, program_code, node_type, node_effect_name,
                                              disabled, child_nodes_names, available)
 
