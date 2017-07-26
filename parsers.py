@@ -40,7 +40,7 @@ def parse_program_code(program_code):
     return current_code
 
 
-def dump_current_code(program_code):
+def dump_program_code(program_code):
     input_object = deepcopy(program_code)
     if isinstance(input_object, basestring) and str(input_object).startswith('#'):
         input_object = input_object.strip('#')

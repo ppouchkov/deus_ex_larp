@@ -13,7 +13,8 @@ import yaml
 from check_rule import check_rule
 from config import attacker, node_holder, data
 from entities import System, Program, AttackReply, SystemNode
-from parsers import parse_status, parse_program, parse_effect, parse_node, parse_attack_reply, parse_diagnostics
+from parsers import parse_status, parse_program, parse_effect, parse_node, parse_attack_reply, parse_diagnostics, \
+    parse_program_code, dump_program_code
 from utils import stable_write, cache_check
 
 
@@ -253,38 +254,37 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     @make_command(is_blocking=True, handler=None)
     def cmd_info(self, program_code, verbose=True):
+        current_code = parse_program_code(program_code)
         if current_code is None:
             print 'wrong code: {}'.format(program_code)
             return
+        current_folder = os.path.join(data, 'programs')
 
-        if not os.path.exists(current_folder):
-            print 'create folder {}'.format(current_folder)
-            os.mkdir(current_folder)
-
-        if not os.path.exists(os.path.join(current_folder, '#{}'.format(current_code))):
+        program = cache_check(current_code, dump_program_code(current_code))
+        if program:
+            logging.info('cache hit: {}'.format(current_code))
+            self.wait_for_reply = False
+            if verbose:
+                print program
+        else:
             self.reply_handler = partial(self.dump_reply_handler,
                                          folder=current_folder,
                                          file_name_getter=lambda x: '#{0.code}'.format(x),
                                          parser=parse_program)
-            return 'info #{}'.format(current_code)
-        elif verbose:
-            logging.info('<<< cached #{} '.format(program_code))
-            with open(os.path.join(current_folder, '#{}'.format(current_code))) as f:
-                print yaml.load(f)
-        return None
+            return 'info {}'.format(dump_program_code(current_code))
 
     @make_command(is_blocking=False, handler=None)
     def cmd_info_total(self, program_code, verbose=True):
-        self.cmd_info(program_code, verbose)
-        with open(os.path.join(data, 'programs', '#{}'.format(program_code))) as f:
-            current_program = yaml.load(f)
-        if current_program.effect_name:
-            self.cmd_effect(current_program.effect_name, verbose=False)
-        if current_program.inevitable_effect_name:
-            self.cmd_effect(current_program.inevitable_effect_name, verbose=False)
+        if cache_check(program_code, dump_program_code(program_code)) is None:
+            self.cmd_info(program_code, verbose)
+        program = cache_check(program_code, dump_program_code(program_code))
+        if program.effect_name:
+            self.cmd_effect(program.effect_name, verbose=False)
+        if program.inevitable_effect_name:
+            self.cmd_effect(program.inevitable_effect_name, verbose=False)
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_batch_info(self, *program_codes, **kwargs):
+    def cmd_info_list(self, *program_codes, **kwargs):
         program_codes = [code.strip(' ,\n') for code in program_codes]
         for program_code in program_codes:
             self.cmd_info_total(program_code, kwargs.get('verbose', True))
