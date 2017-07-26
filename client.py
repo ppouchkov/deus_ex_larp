@@ -278,7 +278,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         current_folder = os.path.join(data, 'programs')
         if cache_check(current_folder, dump_program_code(program_code)) is None:
             self.cmd_info(program_code, verbose)
-        program = cache_check(program_code, dump_program_code(program_code))
+        program = cache_check(current_folder, dump_program_code(program_code))
         if program.effect_name:
             self.cmd_effect(program.effect_name, verbose=False)
         if program.inevitable_effect_name:
@@ -307,8 +307,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if self.target:
             target_folder = os.path.join(data, self.target.name)
             self.target.update_from_folder(target_folder, redraw=True)
-            for elem in self.target.node_graph.itervalues():
-                print elem.name, elem.program_code
         return message
 
     @make_command(is_blocking=True, handler='look_reply_handler')
