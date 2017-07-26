@@ -171,6 +171,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.last_command_sent = datetime.datetime.now()
 
     def message(self, msg):
+        # TODO check from
         self.output_buffer.appendleft(self.reply_handler(msg['body']))
         print self.output_buffer[0]
 
