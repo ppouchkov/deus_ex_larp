@@ -119,9 +119,13 @@ class SystemNode(YAMLObject):
         else:
             program_code = self.program_code
         program_file_name = os.path.join(data, 'programs', program_code)
-        with open(program_file_name) as f:
-            program = yaml.load(f)
-        return program.inevitable_effect_name is not None
+        try:
+            with open(program_file_name) as f:
+                program = yaml.load(f)
+        except IOError:
+            print 'WARNING: unknown code {}'.format(program_code)
+            program = None
+        return program and program.inevitable_effect_name is not None
 
     @property
     def graphviz_style_dict(self):

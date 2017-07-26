@@ -51,12 +51,12 @@ def parse_node_from_short_string(input_string, system):
     program_code = int(search_string("#(\d+)", input_string) or 0)
     disabled = search_string("(DISABLED)", input_string) is not None
     child_nodes_names = []
-    child_nodes_names_str = search_string('"Child nodes: *\[(.*?)\]', input_string)
+    child_nodes_names_str = search_string('Child nodes:\[(.*?)\]', input_string)
     if child_nodes_names_str:
         child_nodes_names = [elem.strip() for elem in child_nodes_names_str.split(',')]
 
     return (
-        SystemNode(system, name, encrypted, program_code, node_type, None, disabled, None, True),
+        SystemNode(system, name, encrypted, program_code, node_type, None, disabled, child_nodes_names, True),
         [(name, child_name) for child_name in child_nodes_names]
     )
 
@@ -113,6 +113,6 @@ def parse_diagnostics(input_str):
     for line in input_str_arr:
         line = line.strip()
         if line:
-            new_node, _ = parse_node_from_short_string(line, system)
+            new_node, edges = parse_node_from_short_string(line, system)
             system.add_node(new_node)
     return system
