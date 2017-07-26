@@ -447,7 +447,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             lines = '\n'.join(f.readlines())
         system = parse_diagnostics(lines)
         print 'parsed {} nodes'.format(len(system.node_graph))
-        print 'system firewall {}'.format(len(system.node_graph['firewall'].child_nodes_names))
         system.dump_to_folder(os.path.join(data, system.name))
         system.draw(os.path.join(data, system.name), view=True)
 
