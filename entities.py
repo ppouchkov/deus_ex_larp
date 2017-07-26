@@ -184,3 +184,78 @@ class System(YAMLObject):
 
 
 AttackReply = namedtuple('AttackReply', ['success', 'new_defence', 'new_available', 'new_disabled', 'warning'])
+
+
+class TestSystemNode(SystemNode):
+    unavailable_template = """
+    --------------------
+    {0.system}/{0.name} not available
+
+    END ----------------
+    """
+    enabled_template = """
+    --------------------
+    Node "{0.system}/{0.name}" properties:
+    Installed program: {0.program_code}
+    Type: {0.node_type}
+    END ----------------
+    """
+    enabled_with_effect_template = """
+    --------------------
+    Node "{0.system}/{0.name}" properties:
+    Installed program: {0.program_code}
+    Type: {0.node_type}
+    Node effect: {0.node_effect_name}
+    END ----------------
+    """
+    disabled_template = """
+    --------------------
+    Node "{0.system}/{0.name}" properties:
+    Installed program: {0.program_code}
+    Type: {0.node_type}
+    DISABLED for: 241 sec
+    {child_node_short_string_list}
+
+    END ----------------
+    """
+    disabled_with_effect_template = """
+    --------------------
+    Node "{system}/{name}" properties:
+    Installed program: {code}
+    Type: {node_type}
+    DISABLED for: 241 sec
+    Node effect: {node_effect}
+    {child_node_short_string_list}
+
+    END ----------------
+    """
+    short_string_enabled_template = """
+    {0.name} (0.node_type): {0.program_code}
+    """.strip()
+    short_string_disabled_template = """
+    {0.name} (0.node_type): {0.program_code} DISABLED
+    """.strip()
+
+    def __init__(self, system, name, encrypted, program_code, node_type, node_effect_name, disabled, child_nodes_names,
+                 available):
+        super(TestSystemNode, self).__init__(system, name, encrypted, program_code, node_type, node_effect_name,
+                                             disabled, child_nodes_names, available)
+
+    def str_unavailable(self):
+        return self.unavailable_template.format(self)
+
+    def str_enabled(self):
+        if self.node_effect_name:
+            return self.enabled_with_effect_template.format(self)
+        return self.enabled_template.format(self)
+
+    def str_disabled(self, child_short_list):
+        if self.node_effect_name:
+            return self.disabled_with_effect_template.format(self, child_short_list and 'Child nodes:\n{}'.format(child_short_list) or '')
+        return self.disabled_template.format(self, child_short_list and 'Child nodes:\n{}'.format(child_short_list) or '')
+
+    def str_short_string_enabled(self):
+        return self.short_string_enabled_template.format(self)
+
+    def str_short_string_disabled(self):
+        return self.short_string_disabled_template.format(self)
