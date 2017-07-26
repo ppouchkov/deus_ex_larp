@@ -95,9 +95,9 @@ Allowed node types:
  -Cyptographic system
 END ----------------
 """
-command_defence_25375 = """
+command_defence_25725 = """
 --------------------
-#25375 programm info:
+#25725 programm info:
 Effect: trace
 Inevitable effect: analyze
 Allowed node types:
@@ -210,6 +210,15 @@ Logname:
 BlackMirror692 security log updated
 attack successfull
 """
+attack_reply_success_template = """
+executing program #{code} from quentin726 target:{target}
+Node defence: #{defence_code}
+Inevitable effect triggered
+Logname:
+{target} security log updated
+attack successfull
+"""
+
 attack_reply_failure = """
 executing program #980 from quentin726 target:BlackMirror692
 Node defence: #43086043

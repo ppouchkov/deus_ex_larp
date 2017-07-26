@@ -413,9 +413,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 current_program = yaml.load(f)
                 assert isinstance(current_program, Program)
                 if current_node.node_type not in set(current_program.node_types):
-                    print 'type decline', current_program.code
-                    print 'node type', current_node.node_type
-                    print 'program types', current_node.node_type
                     continue
                 if not check_rule(current_program.code, current_node.program_code):
                     continue
