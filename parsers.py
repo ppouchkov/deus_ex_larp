@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 
 import yaml
 
@@ -25,6 +26,25 @@ def parse_status(input_string):
         proxy_level = int(search_string("Proxy level: (\d*?)\n", input_string) or 0)
         proxy_address = search_string("Current proxy address: (.*?)\n", input_string)
     return Status(target, adm_system, proxy_level, proxy_address)
+
+
+def parse_program_code(program_code):
+    input_object = deepcopy(program_code)
+    current_code = None
+    if isinstance(input_object, basestring) and str(input_object).startswith('#'):
+        input_object = input_object.strip('#')
+    if isinstance(input_object, basestring) and str(input_object).isdigit():
+        current_code = int(input_object)
+    elif isinstance(program_code, int):
+        current_code = input_object
+    return current_code
+
+
+def dump_current_code(program_code):
+    input_object = deepcopy(program_code)
+    if isinstance(input_object, basestring) and str(input_object).startswith('#'):
+        input_object = input_object.strip('#')
+    return '#{}'.format(input_object)
 
 
 def parse_program(input_string):

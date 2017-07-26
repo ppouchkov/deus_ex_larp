@@ -94,6 +94,13 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     def __init__(self, start=True):
         sleekxmpp.ClientXMPP.__init__(self, attacker.jid, attacker.pwd)
+        if not os.path.exists(os.path.join(data, 'effects')):
+            print 'create folder {}'.format(os.path.join(data, 'effects'))
+            os.mkdir(os.path.join(data, 'effects'))
+        if not os.path.exists(os.path.join(data, 'programs')):
+            print 'create folder {}'.format(os.path.join(data, 'programs'))
+            os.mkdir(os.path.join(data, 'programs'))
+
         self.register_plugin('xep_0030')  # Service Discovery
         self.register_plugin('xep_0199')  # XMPP Ping
 
@@ -225,9 +232,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=True, handler=None)
     def cmd_effect(self, effect_name, verbose=True):
         current_folder = os.path.join(data, 'effects')
-        if not os.path.exists(current_folder):
-            print 'create folder {}'.format(current_folder)
-            os.mkdir(current_folder)
         effect = cache_check(current_folder, effect_name)
         if effect:
             logging.info('cache hit: {}'.format(effect_name))
@@ -249,14 +253,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     @make_command(is_blocking=True, handler=None)
     def cmd_info(self, program_code, verbose=True):
-        current_code = None
-        current_folder = os.path.join(data, 'programs')
-        if isinstance(program_code, basestring) and str(program_code).startswith('#'):
-            program_code = program_code.strip('#')
-        if isinstance(program_code, basestring) and str(program_code).isdigit():
-            current_code = int(program_code)
-        elif isinstance(program_code, int):
-            current_code = program_code
         if current_code is None:
             print 'wrong code: {}'.format(program_code)
             return
