@@ -294,7 +294,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=False, handler=None)
     def cmd_file_info(self, file_name, verbose=False):
         with open(os.path.join(data, file_name)) as f:
-            self.cmd_batch_info(*f.readlines(), verbose=verbose)
+            self.cmd_info_list(*f.readlines(), verbose=verbose)
 
     @make_reply_handler()
     def dump_reply_handler(self, message, folder, file_name_getter, parser):
