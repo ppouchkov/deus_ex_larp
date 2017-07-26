@@ -13,7 +13,7 @@ import yaml
 from check_rule import check_rule
 from config import attacker, node_holder, data
 from entities import System, Program, AttackReply, SystemNode
-from parsers import parse_status, parse_program, parse_effect, parse_node, parse_attack_reply
+from parsers import parse_status, parse_program, parse_effect, parse_node, parse_attack_reply, parse_diagnostics
 
 
 def make_command(is_blocking, handler):
@@ -440,8 +440,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def cmd_atk(self, system_node='firewall'):
         self.cmd_attack_choice(system_node)
 
+    @make_command(is_blocking=False, handler=None)
     def cmd_parse_diagnostics(self, file_name):
-        pass
+        current_path = os.path.join(data, file_name)
+        with open(current_path) as f:
+            lines = '\n'.join(f.readlines())
+        system = parse_diagnostics(lines)
+        system.dump_to_folder(os.path.join(data, system.name))
+        system.draw(os.path.join(data, system.name), view=True)
 
 if __name__ == '__main__':
     rc = ResendingClient()

@@ -3,7 +3,7 @@ import re
 import yaml
 
 import test_strings
-from entities import Status, Program, Effect, SystemNode, AttackReply
+from entities import Status, Program, Effect, SystemNode, AttackReply, System
 
 
 def search_string(pattern, input_str, none_value=None):
@@ -105,4 +105,14 @@ def parse_attack_reply(input_string):
     )
 
 
-
+def parse_diagnostics(input_str):
+    input_str_arr = input_str.strip().splitlines()
+    header = input_str_arr.pop(0)
+    system_name = search_string("(\w+) system diagnostics:", header)
+    system = System(system_name)
+    for line in input_str_arr:
+        line = line.strip()
+        if line:
+            new_node, _ = parse_node_from_short_string(line, system)
+            system.add_node(new_node)
+    return system

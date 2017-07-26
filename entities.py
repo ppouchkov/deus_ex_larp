@@ -114,7 +114,11 @@ class SystemNode(YAMLObject):
     def program_has_inevitable_effect(self):
         if self.program_code is None:
             return None
-        program_file_name = os.path.join(data, 'programs', self.program_code)
+        elif isinstance(self.program_code, int) or not str(self.program_code).startswith('#'):
+            program_code = '#{}'.format(self.program_code)
+        else:
+            program_code = self.program_code
+        program_file_name = os.path.join(data, 'programs', program_code)
         with open(program_file_name) as f:
             program = yaml.load(f)
         return program.inevitable_effect_name is not None
@@ -150,6 +154,14 @@ class System(YAMLObject):
                 self.add_node(yaml.load(f))
         if redraw:
             self.draw(folder_name)
+
+    def dump_to_folder(self, folder_name):
+        if not os.path.exists(folder_name):
+            os.mkdir(folder_name)
+        for elem in self.node_graph.itervalues():
+            with open(os.path.join(folder_name, elem.name), 'w') as f:
+                pass
+                # yaml.dump(elem, f, default_style='|')
 
     def add_node(self, new_node):
         current_node = self.node_graph.setdefault(new_node.name, new_node)
