@@ -243,8 +243,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             return 'effect {}'.format(effect_name)
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_effect_list(self, effect_names):
-        for effect_name in effect_names.split():
+    def cmd_effect_list(self, *effect_names):
+        for effect_name in effect_names:
             self.cmd_effect(effect_name.strip(','))
 
     @make_command(is_blocking=True, handler=None)
