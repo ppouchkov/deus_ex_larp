@@ -277,6 +277,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             sleep(1)
         print 'finish batch_info {}'.format(len(program_codes))
 
+    @make_command(is_blocking=False, handler=None)
     def cmd_file_info(self, file_name, verbose=False):
         with open(os.path.join(data, file_name)) as f:
             self.cmd_batch_info(*f.readlines(), verbose=verbose)
