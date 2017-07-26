@@ -375,6 +375,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=False, handler=None)
     def cmd_explore_choice(self, system_node='firewall'):
         current_node = self.target.node_graph[system_node]
+        self.choice_buffer.append('/explore {} attack}'.format(system_node))
         for child_name in current_node.child_nodes_names:
             self.choice_buffer.append('/explore {} attack}'.format(child_name))
         self.choice_buffer.append('/flush_choice')
