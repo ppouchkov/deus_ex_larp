@@ -442,13 +442,17 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.cmd_attack_choice(system_node)
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_parse_diagnostics(self, file_name):
+    def cmd_parse_diagnostics(self, file_name, skip_codes=False):
         current_path = os.path.join(data, file_name)
         with open(current_path) as f:
             lines = '\n'.join(f.readlines())
         system = parse_diagnostics(lines)
         print 'parsed {} nodes'.format(len(system.node_graph))
         system.dump_to_folder(os.path.join(data, system.name))
+        if not skip_codes:
+            codes = [node.program_code for node in system.node_graph.itervalues()]
+            for code in codes:
+                self.cmd_info_total(code, verbose=False)
         system.draw(os.path.join(data, system.name), view=True)
 
 if __name__ == '__main__':
