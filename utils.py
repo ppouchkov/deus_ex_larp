@@ -18,3 +18,7 @@ def cache_check(folder_name, file_name):
             return yaml.load(f)
     else:
         return None
+
+
+def cache_dump(folder_name, file_name, obj):
+    stable_write(folder_name, file_name, yaml.dump(obj, default_style='|'), 'w')

@@ -133,6 +133,6 @@ def parse_diagnostics(input_str):
     for line in input_str_arr:
         line = line.strip()
         if line:
-            new_node, edges = parse_node_from_short_string(line, system)
+            new_node, edges = parse_node_from_short_string(line, system_name)
             system.add_node(new_node)
     return system

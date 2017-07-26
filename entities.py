@@ -6,6 +6,7 @@ import yaml
 from graphviz import Digraph
 
 from config import loot_node_types, data
+from utils import stable_write
 
 
 class YAMLObject(yaml.YAMLObject):
@@ -141,9 +142,7 @@ class SystemNode(YAMLObject):
         return dict(shape=shape, style='filled', fillcolor=color)
 
 
-class System(YAMLObject):
-    yaml_tag = '!System'
-
+class System(object):
     def __init__(self, name):
         self.name = name
         self.node_graph = {}
@@ -163,9 +162,7 @@ class System(YAMLObject):
         if not os.path.exists(folder_name):
             os.mkdir(folder_name)
         for elem in self.node_graph.itervalues():
-            with open(os.path.join(folder_name, elem.name), 'w') as f:
-                pass
-                # yaml.dump(elem, f, default_style='|')
+            stable_write(folder_name, elem.name, yaml.dump(elem, default_style='|'))
 
     def add_node(self, new_node):
         current_node = self.node_graph.setdefault(new_node.name, new_node)

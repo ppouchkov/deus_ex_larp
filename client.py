@@ -260,7 +260,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             return
         current_folder = os.path.join(data, 'programs')
 
-        program = cache_check(current_code, dump_program_code(current_code))
+        program = cache_check(current_folder, dump_program_code(current_code))
         if program:
             logging.info('cache hit: {}'.format(current_code))
             self.wait_for_reply = False
@@ -275,7 +275,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     @make_command(is_blocking=False, handler=None)
     def cmd_info_total(self, program_code, verbose=True):
-        if cache_check(program_code, dump_program_code(program_code)) is None:
+        current_folder = os.path.join(data, 'programs')
+        if cache_check(current_folder, dump_program_code(program_code)) is None:
             self.cmd_info(program_code, verbose)
         program = cache_check(program_code, dump_program_code(program_code))
         if program.effect_name:
@@ -448,10 +449,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             lines = '\n'.join(f.readlines())
         system = parse_diagnostics(lines)
         print 'parsed {} nodes'.format(len(system.node_graph))
-        system.dump_to_folder(os.path.join(data, system.name))
         if not skip_codes:
             for code in [node.program_code for node in system.node_graph.itervalues() if node.program_code]:
                 self.cmd_info_total(code, verbose=False)
+        system.dump_to_folder(os.path.join(data, system.name))
         system.draw(os.path.join(data, system.name), view=True)
 
 if __name__ == '__main__':
