@@ -4,7 +4,7 @@ import datetime
 import logging
 import os
 from collections import deque
-from functools import partial, wraps
+from functools import partial
 from time import sleep
 
 import sleekxmpp
