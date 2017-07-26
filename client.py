@@ -172,6 +172,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if not os.path.exists(target_folder):
             os.mkdir(target_folder)
         self.target = System(target_name)
+        self.target.node_graph['firewall'] = SystemNode(target_name, 'firewall', *[None]*6+[True, ])
         self.target.update_from_folder(target_folder, redraw=True)
         return 'new target: {}'.format(target_name)
 
