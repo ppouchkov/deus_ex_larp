@@ -451,7 +451,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         system.dump_to_folder(os.path.join(data, system.name))
         if not skip_codes:
             for code in [node.program_code for node in system.node_graph.itervalues()]:
-                self.cmd_info_total(code, verbose=False)
+                if code:
+                    self.cmd_info_total(code, verbose=False)
         system.draw(os.path.join(data, system.name), view=True)
 
 if __name__ == '__main__':
