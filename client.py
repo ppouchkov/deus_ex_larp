@@ -43,7 +43,7 @@ def make_command(is_blocking, handler):
                     sleep(ResendingClient.wait_rate)
             except Exception as e:
                 print 'CMD ERROR: {}'.format(str(e))
-                logging.exception('CMD ERROR: {}'.format(str(e)))
+                logging.exception('CMD {} ERROR: {}'.format(command_method.__name__, str(e)))
         return wrapper
     return wrapped
 
@@ -62,7 +62,7 @@ def make_reply_handler():
                 return result
             except Exception as e:
                 print 'HANDLER ERROR: {}'.format(str(e))
-                logging.exception('CMD ERROR: {}'.format(str(e)))
+                logging.exception('HANDER {} ERROR: {}'.format(handler_method.__name__, str(e)))
         return wrapper
     return wrapped
 
