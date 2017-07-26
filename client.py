@@ -53,6 +53,7 @@ def make_command(is_blocking, handler):
 def make_reply_handler():
     def wrapped(handler_method):
         def wrapper(instance, message, **kwargs):
+            result = None
             try:
                 logging.info('< {}({})'.format(
                     handler_method.__name__,
@@ -60,13 +61,13 @@ def make_reply_handler():
                 logging.info('<<< {}'.format(message))
                 assert isinstance(instance, ResendingClient)
                 result = handler_method(instance, message, **kwargs)
-                instance.wait_for_reply = False
-                return result
             except Exception as e:
                 print 'HANDLER ERROR: {}'.format(str(e))
                 logging.exception('HANDER {} ERROR: {}'.format(handler_method.__name__, str(e)))
             finally:
+                instance.wait_for_reply = False
                 instance.reply_handler = getattr(instance, 'default_reply_handler')
+            return result
         return wrapper
     return wrapped
 
