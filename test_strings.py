@@ -95,6 +95,21 @@ Allowed node types:
  -Cyptographic system
 END ----------------
 """
+command_defence_25375 = """
+--------------------
+#25375 programm info:
+Effect: trace
+Inevitable effect: analyze
+Allowed node types:
+ -Firewall
+ -Antivirus
+ -VPN
+ -Brandmauer
+ -Router
+ -Traffic monitor
+ -Cyptographic system
+END ----------------
+"""
 
 node_disabled = """
 --------------------

@@ -14,6 +14,7 @@ from check_rule import check_rule
 from config import attacker, node_holder, data
 from entities import System, Program, AttackReply, SystemNode
 from parsers import parse_status, parse_program, parse_effect, parse_node, parse_attack_reply, parse_diagnostics
+from utils import stable_write, cache_check
 
 
 def make_command(is_blocking, handler):
@@ -22,7 +23,7 @@ def make_command(is_blocking, handler):
             try:
                 logging.info('> {}({}{}{})'.format(
                     command_method.__name__,
-                    ', '.join(args),
+                    ', '.join(str(arg) for arg in args),
                     ', ' if kwargs else '',
                     ', '.join('{}={}'.format(k, kwargs[k]) for k in kwargs)))
                 assert isinstance(instance, ResendingClient)
@@ -52,7 +53,7 @@ def make_reply_handler():
     def wrapped(handler_method):
         def wrapper(instance, message, **kwargs):
             try:
-                logging.info('> {}({})'.format(
+                logging.info('< {}({})'.format(
                     handler_method.__name__,
                     ', '.join('{}={}'.format(k, kwargs[k]) for k in kwargs)))
                 logging.info('<<< {}'.format(message))
@@ -63,6 +64,8 @@ def make_reply_handler():
             except Exception as e:
                 print 'HANDLER ERROR: {}'.format(str(e))
                 logging.exception('HANDER {} ERROR: {}'.format(handler_method.__name__, str(e)))
+            finally:
+                instance.reply_handler = getattr(instance, 'default_reply_handler')
         return wrapper
     return wrapped
 
@@ -171,6 +174,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         print 'disconnect'
         self.disconnect(wait=True)
 
+    @make_command(is_blocking=False, handler=None)
+    def cmd_store(self, file_name='stored_data'):
+        if self.target is None:
+            current_folder = data
+        else:
+            current_folder = os.path.join(data, self.target.name)
+        stable_write(current_folder, file_name, self.output_buffer[0], mode='a')
+
     @make_command(is_blocking=True, handler=None)
     def cmd_target(self, system):
         assert system, 'Specify system name'
@@ -217,17 +228,24 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if not os.path.exists(current_folder):
             print 'create folder {}'.format(current_folder)
             os.mkdir(current_folder)
-        if not os.path.exists(os.path.join(current_folder, effect_name)):
-            print 'Cache miss'
+        effect = cache_check(current_folder, effect_name)
+        if effect:
+            logging.info('cache hit: {}'.format(effect_name))
+            self.wait_for_reply = False
+            if verbose:
+                print effect
+        elif effect is None:
+            logging.info('cache miss: {}'.format(effect_name))
             self.reply_handler = partial(self.dump_reply_handler,
                                          folder=current_folder,
                                          file_name_getter=lambda x: '{0.name}'.format(x),
                                          parser=parse_effect)
             return 'effect {}'.format(effect_name)
-        elif verbose:
-            with open(os.path.join(current_folder, effect_name)) as f:
-                print 'Cache hit'
-                print yaml.load(f)
+
+    @make_command(is_blocking=False, handler=None)
+    def cmd_effect_list(self, effect_names):
+        for effect_name in effect_names.split():
+            self.cmd_effect(effect_name.strip(','))
 
     @make_command(is_blocking=True, handler=None)
     def cmd_info(self, program_code, verbose=True):
@@ -286,27 +304,13 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def dump_reply_handler(self, message, folder, file_name_getter, parser):
         try:
             obj = parser(message)
-            with open(os.path.join(folder, file_name_getter(obj)), 'w') as f:
-                yaml.dump(obj, f, default_style='|')
+            stable_write(folder, file_name_getter(obj), yaml.dump(obj, default_style='|'), 'w')
         except Exception as e:
-            return 'ERROR: {}'.format(str(e))
+            return 'DUMP ERROR: {}'.format(str(e))
         if self.target:
             target_folder = os.path.join(data, self.target.name)
             self.target.update_from_folder(target_folder, redraw=True)
         return message
-
-    @make_command(is_blocking=False, handler=None)
-    def cmd_store(self, file_name='stored_data'):
-        if self.target is None:
-            current_folder = data
-        else:
-            current_folder = os.path.join(data, self.target.name)
-        try:
-            f = open(os.path.join(current_folder, file_name), "a", 0)
-            f.write(self.output_buffer[0])
-            f.close()
-        except IOError as (errno, strerror):
-            print "I/O error({0}): {1}".format(errno, strerror)
 
     @make_command(is_blocking=True, handler='look_reply_handler')
     def cmd_look(self, system_node_name):
