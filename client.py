@@ -4,7 +4,7 @@ import datetime
 import logging
 import os
 from collections import deque
-from functools import partial
+from functools import partial, wraps
 from time import sleep
 
 import sleekxmpp
@@ -20,6 +20,8 @@ def make_command(is_blocking, handler):
     def wrapped(command_method):
         def wrapper(instance, *args, **kwargs):
             try:
+                logging.info('> {}'.format(command_method.__name__))
+                logging.info('>>> {} {}'.format(' '.join(args), ' '.join('{}: {}'.format(k, kwargs[k]) for k in kwargs)))
                 assert isinstance(instance, ResendingClient)
                 if is_blocking and not instance.disable_locks:
                     instance.wait_for_reply = True
@@ -29,6 +31,7 @@ def make_command(is_blocking, handler):
                     instance.reply_handler = getattr(instance, 'default_reply_handler')
                 message = command_method(instance, *args, **kwargs)
                 if message:
+                    logging.info('>>> {}'.format(message))
                     instance.forward_message(message)
                 wait_start = datetime.datetime.now()
                 while instance.wait_for_reply:
@@ -36,6 +39,7 @@ def make_command(is_blocking, handler):
                         raise ValueError('Waited too long')
                     sleep(ResendingClient.wait_rate)
             except Exception as e:
+                print 'CMD ERROR: {}'.format(str(e))
                 logging.exception('CMD ERROR: {}'.format(str(e)))
         return wrapper
     return wrapped
@@ -45,12 +49,15 @@ def make_reply_handler():
     def wrapped(handler_method):
         def wrapper(instance, message, **kwargs):
             try:
+                logging.info('< {}'.format(handler_method.__name__))
+                logging.info('<<< {}'.format(message))
                 assert isinstance(instance, ResendingClient)
                 result = handler_method(instance, message, **kwargs)
                 instance.wait_for_reply = False
                 return result
             except Exception as e:
                 print 'HANDLER ERROR: {}'.format(str(e))
+                logging.exception('CMD ERROR: {}'.format(str(e)))
         return wrapper
     return wrapped
 
@@ -115,7 +122,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.forward_message(self.greeting_message)
 
     def forward_message(self, message):
-        logging.info(message)
         if message == '/exit':
             self.close()
             return
@@ -152,8 +158,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.output_buffer.appendleft(self.reply_handler(msg['body']))
         print self.output_buffer[0]
 
-    @classmethod
-    def default_reply_handler(cls, message):
+    @make_reply_handler()
+    def default_reply_handler(self, message):
         return message
 
     def close(self):
@@ -243,7 +249,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                                          parser=parse_program)
             return 'info #{}'.format(current_code)
         elif verbose:
-            logging.info('cached #{} '.format(program_code))
+            logging.info('<<< cached #{} '.format(program_code))
             with open(os.path.join(current_folder, '#{}'.format(current_code))) as f:
                 print yaml.load(f)
         return None
@@ -377,7 +383,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     @make_command(is_blocking=False, handler=None)
     def cmd_explore_choice(self, system_node='firewall'):
-        logging.info('/explore_choice {}'.format(system_node))
         current_node = self.target.node_graph[system_node]
         self.choice_buffer.append('/explore {} attack'.format(system_node))
         for child_name in current_node.child_nodes_names:
