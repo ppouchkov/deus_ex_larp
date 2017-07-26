@@ -20,10 +20,11 @@ def make_command(is_blocking, handler):
     def wrapped(command_method):
         def wrapper(instance, *args, **kwargs):
             try:
-                logging.info('> {} {} {}'.format(
+                logging.info('> {}({}{}{})'.format(
                     command_method.__name__,
-                    ' '.join(args),
-                    ' '.join('{}: {}'.format(k, kwargs[k]) for k in kwargs)))
+                    ', '.join(args),
+                    ', ' if kwargs else '',
+                    ', '.join('{}={}'.format(k, kwargs[k]) for k in kwargs)))
                 assert isinstance(instance, ResendingClient)
                 if is_blocking and not instance.disable_locks:
                     instance.wait_for_reply = True
@@ -51,7 +52,9 @@ def make_reply_handler():
     def wrapped(handler_method):
         def wrapper(instance, message, **kwargs):
             try:
-                logging.info('< {}'.format(handler_method.__name__))
+                logging.info('> {}({})'.format(
+                    handler_method.__name__,
+                    ', '.join('{}={}'.format(k, kwargs[k]) for k in kwargs)))
                 logging.info('<<< {}'.format(message))
                 assert isinstance(instance, ResendingClient)
                 result = handler_method(instance, message, **kwargs)
