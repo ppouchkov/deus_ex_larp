@@ -316,9 +316,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.system)
         result = self.dump_reply_handler(
             message,
-            '{}/{}'.format(data, self.target.name),
-            lambda obj: obj.name,
-            lambda m: parse_node(m)[0]
+            folder='{}/{}'.format(data, self.target.name),
+            file_name_getter=lambda obj: obj.name,
+            parser=lambda m: parse_node(m)[0]
         )
         return result
 
