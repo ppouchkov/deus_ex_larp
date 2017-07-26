@@ -173,6 +173,7 @@ class System(object):
         current_node.disabled = new_node.disabled
         current_node.child_nodes_names = new_node.child_nodes_names or current_node.child_nodes_names
         current_node.available = new_node.available
+        current_node.node_type = new_node.node_type or current_node.node_type
 
     def draw(self, folder_name, view=False):
         dot = Digraph(name=self.name, format='svg')

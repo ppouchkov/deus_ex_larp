@@ -303,10 +303,12 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             obj = parser(message)
             stable_write(folder, file_name_getter(obj), yaml.dump(obj, default_style='|'), 'w')
         except Exception as e:
+            logging.exception('DUMP ERROR: {}'.format(str(e)))
             return 'DUMP ERROR: {}'.format(str(e))
         if self.target:
             target_folder = os.path.join(data, self.target.name)
             self.target.update_from_folder(target_folder, redraw=True)
+            print 'tgt', self.target.node_graph['firewall'].node_type
         return message
 
     @make_command(is_blocking=True, handler='look_reply_handler')
@@ -327,6 +329,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             file_name_getter=lambda obj: obj.name,
             parser=lambda m: parse_node(m)[0]
         )
+        print self.target.node_graph['firewall'].node_type
         return result
 
     @make_command(is_blocking=False, handler=None)
@@ -410,6 +413,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 current_program = yaml.load(f)
                 assert isinstance(current_program, Program)
                 if current_node.node_type not in set(current_program.node_types):
+                    print 'type decline', current_program.code
+                    print 'node type', current_node.node_type
+                    print 'program types', current_node.node_type
                     continue
                 if not check_rule(current_program.code, current_node.program_code):
                     continue
@@ -419,7 +425,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                             if effect_filter == 'all' or effect_filter == effect_name]:
             print 'Effect: {}'.format(effect_name)
             for i in range(min(limit_for_effect, len(result[effect_name]))):
-                next_command = '/forward_attack {} {}'.format(result[effect_name][i].program_code, system_node)
+                next_command = '/forward_attack {} {}'.format(result[effect_name][i].code, system_node)
                 self.choice_buffer.append(next_command)
                 print '    [{}] {}'.format(current_choice, next_command)
                 current_choice += 1
@@ -428,6 +434,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 self.choice_buffer.append(next_command)
                 print '    [{}] {}'.format(current_choice, next_command)
                 current_choice += 1
+        print 'Default: '
         next_command = '/flush_choice'
         self.choice_buffer.append(next_command)
         print '    [{}] {}'.format(current_choice, next_command)
