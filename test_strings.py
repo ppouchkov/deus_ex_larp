@@ -53,13 +53,46 @@ Effect class: virus.
 
 END ----------------
 """
-
 effect_analyze = """
 --------------------
 Info about 'analyze' effect:
 
 bla-bla-bla defencive code.
 thousand of bugs inside
+Effect class: system defense.
+
+END ----------------
+"""
+effect_minor_fraud = """
+--------------------
+Info about 'minor_fraud' effect:
+
+bla-bla-bla malicious worm.
+thousand of bugs inside
+Effect class: worm.
+
+END ----------------
+"""
+effect_read_data = """
+--------------------
+Info about 'read_data' effect:
+
+
+This effect silently reads data stored in the target node and delivers it to hacker.
+This effect normally leaves no traces in system logs if successful.
+Effect class: worm.
+
+
+
+END ----------------
+"""
+effect_logname = """
+--------------------
+Info about 'logname' effect:
+
+
+Logs attacker current address (login) to the system log.
+If attacker have proxy, his proxy address will be logged instead.
 Effect class: system defense.
 
 END ----------------
@@ -80,6 +113,87 @@ Allowed node types:
 Duration: 600sec.
 END ----------------
 """
+
+command_attack_minor_fraud_template = """
+--------------------
+#{code} programm info:
+Effect: minor_fraud
+Allowed node types:
+ -Bank account
+ -Finance
+Duration: 1200sec.
+END ----------------
+"""
+command_attack_read_data_template = """
+--------------------
+#{code} programm info:
+Effect: read_data
+Allowed node types:
+ -Data
+ -Bank account
+ -Finance
+ -Administrative interface
+Duration: 600sec.
+END ----------------
+"""
+command_attack_get_data_template = """
+--------------------
+#{code} programm info:
+Effect: get_data
+Allowed node types:
+ -Data
+ -Bank account
+ -Finance
+ -Administrative interface
+ -Corporate HQ
+Duration: 600sec.
+END ----------------
+"""
+command_attack_disable_template = """
+--------------------
+#{code} programm info:
+Effect: disable
+Allowed node types:
+ -Firewall
+ -Antivirus
+ -VPN
+ -Brandmauer
+ -Router
+ -Traffic monitor
+ -Cryptographic system
+Duration: 600sec.
+END ----------------
+"""
+command_defence_template = """
+--------------------
+#{code} programm info:
+Effect: {effect}
+Allowed node types:
+ -Firewall
+ -Antivirus
+ -VPN
+ -Brandmauer
+ -Router
+ -Traffic monitor
+ -Cyptographic system
+END ----------------
+"""
+command_defence_inevitable_template = """
+--------------------
+#{code} programm info:
+Effect: {effect}
+Inevitable effect: {inevitable_effect}
+Allowed node types:
+ -Firewall
+ -Antivirus
+ -VPN
+ -Brandmauer
+ -Router
+ -Traffic monitor
+ -Cyptographic system
+END ----------------
+"""
+
 command_defence = """
 --------------------
 #432225 programm info:
