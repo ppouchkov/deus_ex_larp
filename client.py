@@ -298,7 +298,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             return 'info {}'.format(dump_program_code(current_code))
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_info_total(self, program_code, verbose=True):
+    def cmd_info_total(self, program_code, verbose=False):
         current_folder = os.path.join(data, 'programs')
         if cache_check(current_folder, dump_program_code(program_code)) is None:
             self.cmd_info(program_code, verbose)
