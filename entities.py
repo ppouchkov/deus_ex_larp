@@ -216,14 +216,14 @@ class TestSystemNode(SystemNode):
     enabled_template = """
     --------------------
     Node "{0.system}/{0.name}" properties:
-    Installed program: #{0.program_code}
+    Installed program: {0.program_code}
     Type: {0.node_type}
     END ----------------
     """
     enabled_with_effect_template = """
     --------------------
     Node "{0.system}/{0.name}" properties:
-    Installed program: #{0.program_code}
+    Installed program: {0.program_code}
     Type: {0.node_type}
     Node effect: {0.node_effect_name}
     END ----------------
@@ -231,17 +231,17 @@ class TestSystemNode(SystemNode):
     disabled_template = """
     --------------------
     Node "{0.system}/{0.name}" properties:
-    Installed program: #{0.program_code}
+    Installed program: {0.program_code}
     Type: {0.node_type}
     DISABLED for: 241 sec
-    {child_node_short_string_list}
+    {1}
 
     END ----------------
     """
     disabled_with_effect_template = """
     --------------------
     Node "{0.system}/{0.name}" properties:
-    Installed program: #{0.program_code}
+    Installed program: {0.program_code}
     Type: {0.node_type}
     DISABLED for: 241 sec
     Node effect: {0.node_effect_name}

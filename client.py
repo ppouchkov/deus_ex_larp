@@ -359,20 +359,16 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         system_node, system_node_child_strings = parse_node(message)
         if self.target.name != system_node.system:
             return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.system)
-        result = self.dump_reply_handler(
-            message,
-            folder='{}/{}'.format(data, self.target.name),
-            file_name_getter=lambda obj: obj.name,
-            parser=lambda m: parse_node(m)[0]
-        )
+        current_folder = '{}/{}'.format(data, self.target.name)
+        self.target.add_node(system_node.name)
+        names_to_dump = [system_node.name, ]
         for child_node_string in system_node_child_strings:
-            self.dump_reply_handler(
-                child_node_string,
-                folder='{}/{}'.format(data, self.target.name),
-                file_name_getter=lambda obj: obj.name,
-                parser=lambda m: parse_node_from_short_string(m, system_node.system)[0]
-            )
-        return result
+            child_node = parse_node_from_short_string(child_node_string, system_node.system)[0]
+            self.target.add_node(child_node)
+            names_to_dump.append(child_node.name)
+        for name in names_to_dump:
+            stable_write(current_folder, name, yaml.dump(self.target.node_graph[name], default_style='|'), 'w')
+        return message
 
     @make_command(is_blocking=False, handler=None)
     def cmd_explore(self, system_node_name='firewall'):
