@@ -473,6 +473,13 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.cmd_attack_choice(system_node)
 
     @make_command(is_blocking=False, handler=None)
+    def cmd_trace_route(self, target_sytem_node_name):
+        start_system_node = self.target.node_graph['firewall']
+        end_system_node = self.target.node_graph[target_sytem_node_name]
+        pass
+
+
+    @make_command(is_blocking=False, handler=None)
     def cmd_parse_diagnostics(self, file_name, skip_codes=False):
         current_path = os.path.join(data, file_name)
         with open(current_path) as f:
