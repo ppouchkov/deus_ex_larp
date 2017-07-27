@@ -207,6 +207,11 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         # TODO check from
         self.output_queue.put(msg['body'])
 
+    def add_choice(self, command):
+        current_choice = len(self.choice_buffer)
+        self.choice_buffer.append(command)
+        print '    [{}] {}'.format(current_choice, command)
+
     @make_reply_handler()
     def default_reply_handler(self, message):
         return message
@@ -245,7 +250,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             target.update_from_folder('{}/{}'.format(data, target.name), redraw=True)
             target.draw('{}/{}'.format(data, target.name), view=True)
             print 'Draw: ok'
-        print 'Specify target'
+        else:
+            logging.error('Specify target')
+            print 'Specify target'
 
     @make_command(is_blocking=True, handler='status_reply_handler')
     def cmd_status(self):
@@ -425,12 +432,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=False, handler=None)
     def cmd_explore_choice(self, system_node='firewall'):
         current_node = self.target.node_graph[system_node]
-        self.choice_buffer.append('/explore {}'.format(system_node))
+        self.add_choice('/explore {}'.format(system_node))
         for child_name in current_node.child_nodes_names:
-            self.choice_buffer.append('/explore {}}'.format(child_name))
-        self.choice_buffer.append('/flush_choice')
-        for current_choice, command in enumerate(self.choice_buffer):
-            print '    [{}] {}'.format(current_choice, command)
+            self.add_choice('/explore {}}'.format(child_name))
+        self.add_choice('/flush_choice')
 
     @make_command(is_blocking=False, handler=None)
     def cmd_attack_choice(self, system_node, effect_filter='all', limit_for_effect=3):
@@ -453,20 +458,11 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                             if effect_filter == 'all' or effect_filter == effect_name]:
             print 'Effect: {}'.format(effect_name)
             for i in range(min(limit_for_effect, len(result[effect_name]))):
-                next_command = '/forward_attack {} {}'.format(result[effect_name][i].code, system_node)
-                self.choice_buffer.append(next_command)
-                print '    [{}] {}'.format(current_choice, next_command)
-                current_choice += 1
+                self.add_choice('/forward_attack {} {}'.format(result[effect_name][i].code, system_node))
             if limit_for_effect < len(result[effect_name]):
-                next_command = '/attack_choice {} {} {}'.format(system_node, effect_name, len(result[effect_name]))
-                self.choice_buffer.append(next_command)
-                print '    [{}] {}'.format(current_choice, next_command)
-                current_choice += 1
+                self.add_choice('/attack_choice {} {} {}'.format(system_node, effect_name, len(result[effect_name])))
         print 'Default: '
-        next_command = '/flush_choice'
-        self.choice_buffer.append(next_command)
-        print '    [{}] {}'.format(current_choice, next_command)
-        current_choice += 1
+        self.add_choice('/flush_choice')
 
     @make_command(is_blocking=False, handler=None)
     def cmd_flush_choice(self):
