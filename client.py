@@ -360,7 +360,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if self.target.name != system_node.system:
             return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.system)
         current_folder = '{}/{}'.format(data, self.target.name)
-        self.target.add_node(system_node.name)
+        self.target.update_from_folder(current_folder, redraw=False)
+        self.target.add_node(system_node)
         names_to_dump = [system_node.name, ]
         for child_node_string in system_node_child_strings:
             child_node = parse_node_from_short_string(child_node_string, system_node.system)[0]
@@ -368,6 +369,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             names_to_dump.append(child_node.name)
         for name in names_to_dump:
             stable_write(current_folder, name, yaml.dump(self.target.node_graph[name], default_style='|'), 'w')
+        self.target.update_from_folder(current_folder, redraw=True)
         return message
 
     @make_command(is_blocking=False, handler=None)
