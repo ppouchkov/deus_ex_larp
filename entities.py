@@ -238,8 +238,8 @@ class TestSystemNode(SystemNode):
     Installed program: #{0.program_code}
     Type: {0.node_type}
     DISABLED for: 241 sec
-    Node effect: {0.node_effect}
-    {child_node_short_string_list}
+    Node effect: {0.node_effect_name}
+    {1}
 
     END ----------------
     """
