@@ -415,7 +415,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         current_node.disabled = attack_reply.new_disabled
         if attack_reply.new_defence:
             current_node.program_code = attack_reply.new_defence
-        return '{}\n{}'.format(message.strip('\n'), '\n'.join('    - {}'.format(w) for w in attack_reply.warning))
+        return message
 
     @make_command(is_blocking=False, handler=None)
     def cmd_explore_choice(self, system_node='firewall'):
