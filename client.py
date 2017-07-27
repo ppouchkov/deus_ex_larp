@@ -453,7 +453,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 if not check_rule(current_program.code, current_node.program_code):
                     continue
                 result.setdefault(current_program.effect_name, []).append(current_program)
-        current_choice = 0
         for effect_name in [effect_name for effect_name in result
                             if effect_filter == 'all' or effect_filter == effect_name]:
             print 'Effect: {}'.format(effect_name)
