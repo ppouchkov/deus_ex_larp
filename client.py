@@ -147,6 +147,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             while not self.wait_for_reply:
                 sleep(self.wait_rate)
             self.reply_handler(message)
+            self.wait_for_reply = False
         self.close()
         logging.info('{} exited'.format(threading.current_thread().name))
 
