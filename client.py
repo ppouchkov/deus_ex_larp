@@ -422,7 +422,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         current_node = self.target.node_graph[system_node]
         self.choice_buffer.append('/explore {} attack'.format(system_node))
         for child_name in current_node.child_nodes_names:
-            self.choice_buffer.append('/explore {} attack}'.format(child_name))
+            self.choice_buffer.append('/explore {}}'.format(child_name))
         self.choice_buffer.append('/flush_choice')
         for current_choice, command in enumerate(self.choice_buffer):
             print '    [{}] {}'.format(current_choice, command)
