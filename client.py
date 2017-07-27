@@ -450,7 +450,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=False, handler=None)
     def cmd_atk(self, system_node='firewall'):
         self.cmd_attack_choice(system_node)
-        self.cmd_explore_choice(system_node)
 
     @make_command(is_blocking=False, handler=None)
     def cmd_parse_diagnostics(self, file_name, skip_codes=False):
