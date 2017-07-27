@@ -108,6 +108,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         while True:
             message = self.input_queue.get()
             if message == '/exit':
+                self.output_queue.put(message)
                 break
             if not self._is_internal_command(message):
                 delta = (self.last_command_sent + self.sending_delay - datetime.datetime.now()).total_seconds()
@@ -136,6 +137,16 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             else:
                 print 'No such command {}'.format(command)
 
+    def message_reply_parser(self):
+        threading.current_thread().name = 'ReplyParser'
+        while True:
+            message = self.output_queue.get()
+            if message == '/exit':
+                self.output_queue.put(message)
+                break
+            while not self.wait_for_reply:
+                sleep(self.wait_rate)
+            self.reply_handler(message)
         self.close()
         logging.info('{} exited'.format(threading.current_thread().name))
 
@@ -157,6 +168,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.last_command_sent = datetime.datetime.now()
         self.recipient = node_holder.jid
         self.input_queue = Queue()
+        self.output_queue = Queue()
         self.choice_buffer = []
 
         self.reply_handler = self.default_reply_handler
@@ -180,12 +192,13 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
         self._start_thread("Reader", self.message_read_from_stdin)
         self._start_thread("Processor", self.message_process)
+        self._start_thread("ReplyParser", self.message_reply_parser())
 
         self.input_queue.put(self.greeting_message)
 
     def message(self, msg):
         # TODO check from
-        print self.reply_handler(msg['body'])
+        self.output_queue.put(msg['body'])
 
     @make_reply_handler()
     def default_reply_handler(self, message):
