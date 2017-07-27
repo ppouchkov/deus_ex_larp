@@ -474,8 +474,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     @make_command(is_blocking=False, handler=None)
     def cmd_trace_route(self, target_sytem_node_name):
-        start_system_node = self.target.node_graph['firewall']
-        end_system_node = self.target.node_graph[target_sytem_node_name]
+        start_system_node_name = 'firewall'
         pass
 
 
