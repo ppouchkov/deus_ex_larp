@@ -43,7 +43,7 @@ def make_command(is_blocking, handler):
                 message = command_method(instance, *args, **kwargs)
                 if message:
                     logging.info('>>> {}'.format(message))
-                    instance.input_queue.put(message)
+                    instance.send_message(instance.recipient, message, mtype='chat')
                 wait_start = datetime.datetime.now()
                 while instance.wait_for_reply:
                     if datetime.datetime.now() > wait_start + datetime.timedelta(seconds=ResendingClient.wait_for_reply_max):
