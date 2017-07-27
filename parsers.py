@@ -95,11 +95,11 @@ def parse_node(input_string):
     node_effect_name = search_string("""Node effect: (.+?)\n""", input_string)
     child_nodes_names = [str(elem).strip() for elem in re.findall("\d+: (.+?)\(", input_string)]
     disabled = search_string("(DISABLED for:)", input_string) is not None
-    # child_nodes_short_strings = [str(elem).strip() for elem in re.findall("\d+: (.+?)\n", input_string)]
+    child_nodes_short_strings = [str(elem).strip() for elem in re.findall("(\d+: .+?)\n", input_string)]
 
     return (
         SystemNode(system, name, encrypted, program_code, node_type, node_effect_name, disabled, child_nodes_names, available),
-        [(name, child_name) for child_name in child_nodes_names]
+        child_nodes_short_strings
     )
 
 

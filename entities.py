@@ -131,7 +131,9 @@ class SystemNode(YAMLObject):
     @property
     def graphviz_style_dict(self):
         shape = self.node_type in loot_node_types and 'signature' or 'oval'
-        if not self.available:
+        if self.node_type == 'UNKNOWN':
+            color = 'black'
+        elif not self.available:
             color = 'grey'
         elif self.disabled:
             color = 'green'
@@ -155,6 +157,7 @@ class System(object):
                 continue
             with open(os.path.join(folder_name, elem)) as f:
                 self.add_node(yaml.load(f))
+        print self.node_graph
         if redraw:
             self.draw(folder_name)
 
@@ -190,7 +193,7 @@ class System(object):
             elem_visited.add(current_node.name)
             dot.node(current_node.name, **current_node.graphviz_style_dict)
             for child_name in current_node.child_nodes_names:
-                node_buffer.append(self.node_graph[child_name])
+                node_buffer.append(self.node_graph.get(child_name, SystemNode(self.name, child_name, None, None, 'UNKNOWN', None, None, None, True)))
                 edge_buffer.append((current_node.name, child_name))
         for elem in edge_buffer:
             dot.edge(*elem)

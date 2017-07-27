@@ -15,7 +15,7 @@ from check_rule import check_rule
 from config import attacker, node_holder, data
 from entities import System, Program, AttackReply, SystemNode
 from parsers import parse_status, parse_program, parse_effect, parse_node, parse_attack_reply, parse_diagnostics, \
-    parse_program_code, dump_program_code
+    parse_program_code, dump_program_code, parse_node_from_short_string
 from utils import stable_write, cache_check
 
 
@@ -344,7 +344,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     @make_reply_handler()
     def look_reply_handler(self, message):
-        system_node, _ = parse_node(message)
+        system_node, system_node_child_strings = parse_node(message)
         if self.target.name != system_node.system:
             return 'target mismatch: target ({}) node ({})'.format(self.target.name, system_node.system)
         result = self.dump_reply_handler(
@@ -353,6 +353,13 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             file_name_getter=lambda obj: obj.name,
             parser=lambda m: parse_node(m)[0]
         )
+        for child_node_string in system_node_child_strings:
+            self.dump_reply_handler(
+                child_node_string,
+                folder='{}/{}'.format(data, self.target.name),
+                file_name_getter=lambda obj: obj.name,
+                parser=lambda m: parse_node_from_short_string(m, system_node.system)[0]
+            )
         return result
 
     @make_command(is_blocking=False, handler=None)
