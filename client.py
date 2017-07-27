@@ -4,7 +4,7 @@ import datetime
 import logging
 import os
 import threading
-from collections import deque
+from Queue import Queue
 from functools import partial
 from time import sleep
 
@@ -19,11 +19,15 @@ from parsers import parse_status, parse_program, parse_effect, parse_node, parse
 from utils import stable_write, cache_check
 
 
+logging.basicConfig(level=20, filename='data/logs',
+                    format='[%(asctime)s][%(levelname)s][%(threadName)s][%(funcName)s]%(message)s',
+                    datefmt="%Y-%m-%d %H:%M:%S", filemode='w')
+
+
 def make_command(is_blocking, handler):
     def wrapped(command_method):
         def wrapper(instance, *args, **kwargs):
             try:
-                logging.info('> {}'.format(threading.current_thread().name))
                 logging.info('> {}({}{}{})'.format(
                     command_method.__name__,
                     ', '.join(str(arg) for arg in args),
@@ -39,7 +43,7 @@ def make_command(is_blocking, handler):
                 message = command_method(instance, *args, **kwargs)
                 if message:
                     logging.info('>>> {}'.format(message))
-                    instance.forward_message(message)
+                    instance.input_queue.put(message)
                 wait_start = datetime.datetime.now()
                 while instance.wait_for_reply:
                     if datetime.datetime.now() > wait_start + datetime.timedelta(seconds=ResendingClient.wait_for_reply_max):
@@ -90,13 +94,50 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def _is_internal_command(cls, input_str):
         return str(input_str).startswith('/')
 
-    def read_stdin(self):
+    def message_read_from_stdin(self):
+        threading.current_thread().name = 'Reader'
         while True:
             message = raw_input()
-            self.forward_message(message)
+            self.input_queue.put(message)
             if message == '/exit':
                 break
-        print 'Reader exited'
+        logging.info('{} exited'.format(threading.current_thread().name))
+
+    def message_process(self):
+        threading.current_thread().name = 'Processor'
+        while True:
+            message = self.input_queue.get()
+            if message == '/exit':
+                break
+            if not self._is_internal_command(message):
+                delta = (self.last_command_sent + self.sending_delay - datetime.datetime.now()).total_seconds()
+                if delta > 0:
+                    sleep(delta)
+                self.send_message(self.recipient, message, mtype='chat')
+                self.last_command_sent = datetime.datetime.now()
+                continue
+            message_split = message.split()
+            command, args = message_split[0].strip('/'), message_split[1:]
+            if command == 'flush_choice':
+                self.cmd_flush_choice()
+                continue
+            if self.choice_buffer and str(command).isdigit():
+                try:
+                    next_command = self.choice_buffer[int(command)]
+                    self.cmd_flush_choice()
+                    self.input_queue.put(next_command)
+                except Exception as e:
+                    print 'ERROR parsing choice {}: {}'.format(message, str(e))
+                    print 'Flush choice buffer'
+                    logging.exception('ERROR parsing choice {}: {}'.format(message, str(e)))
+                    self.cmd_flush_choice()
+            if hasattr(self, 'cmd_{}'.format(command)):
+                getattr(self, 'cmd_{}'.format(command))(*args)
+            else:
+                print 'No such command {}'.format(command)
+
+        self.close()
+        logging.info('{} exited'.format(threading.current_thread().name))
 
     def __init__(self, start=True):
         sleekxmpp.ClientXMPP.__init__(self, attacker.jid, attacker.pwd)
@@ -115,8 +156,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
         self.last_command_sent = datetime.datetime.now()
         self.recipient = node_holder.jid
-        self.input_buffer = deque([], 5)
-        self.output_buffer = deque([], 5)
+        self.input_queue = Queue()
         self.choice_buffer = []
 
         self.reply_handler = self.default_reply_handler
@@ -138,48 +178,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.send_presence()
         self.get_roster()
 
-        self._start_thread("input", self.read_stdin)
+        self._start_thread("Reader", self.message_read_from_stdin)
+        self._start_thread("Processor", self.message_process)
 
-        self.forward_message(self.greeting_message)
-
-    def forward_message(self, message):
-        if message == '/exit':
-            self.close()
-            return
-        self.input_buffer.appendleft(message)
-        delta = (self.last_command_sent + self.sending_delay - datetime.datetime.now()).total_seconds()
-        if delta > 0:
-            sleep(delta)
-        if not self._is_internal_command(message):
-            self.send_message(self.recipient, message, mtype='chat')
-            self.last_command_sent = datetime.datetime.now()
-            return
-
-        message_split = message.split()
-        command, args = message_split[0].strip('/'), message_split[1:]
-        if self.choice_buffer and not command == 'flush_choice':
-            try:
-                next_command = self.choice_buffer[int(command)]
-                self.choice_buffer = []
-                # self.forward_message(next_command)
-                self._start_thread('choice thread', target=lambda : self.forward_message(next_command))
-            except Exception as e:
-                print 'ERROR parsing choice {}: {}'.format(message, str(e))
-                print 'Flush choice buffer'
-                self.choice_buffer = []
-            return
-        elif command == 'flush_choice':
-            self.cmd_flush_choice()
-        if hasattr(self, 'cmd_{}'.format(command)):
-            getattr(self, 'cmd_{}'.format(command))(*args)
-        else:
-            print 'No such command {}'.format(command)
-        self.last_command_sent = datetime.datetime.now()
+        self.input_queue.put(self.greeting_message)
 
     def message(self, msg):
         # TODO check from
-        self.output_buffer.appendleft(self.reply_handler(msg['body']))
-        print self.output_buffer[0]
+        print self.reply_handler(msg['body'])
 
     @make_reply_handler()
     def default_reply_handler(self, message):
@@ -190,12 +196,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.disconnect(wait=True)
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_store(self, file_name='stored_data'):
-        if self.target is None:
-            current_folder = data
-        else:
-            current_folder = os.path.join(data, self.target.name)
-        stable_write(current_folder, file_name, self.output_buffer[0], mode='a')
+    def cmd_store(self, content, file_name='stored_data'):
+        current_folder = self.target and os.path.join(data, self.target.name) or data
+        stable_write(current_folder, file_name, content, mode='a')
 
     @make_command(is_blocking=True, handler=None)
     def cmd_target(self, system):
@@ -207,7 +210,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def target_reply_handler(self, message, target_name):
         target_folder = os.path.join(data, target_name)
         if message.strip() != 'ok':
-            return ' target failed with message:\n{}'.format(message)
+            return 'target failed with message:\n{}'.format(message)
         if not os.path.exists(target_folder):
             os.mkdir(target_folder)
         self.target = System(target_name)
@@ -216,15 +219,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         return 'new target: {}'.format(target_name)
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_draw(self, system=None, view=True):
-        if system:
-            target = System(system)
-            target.update_from_folder('{}/{}'.format(data, system), redraw=True)
-        else:
-            target = self.target
+    def cmd_draw(self, system_name=None):
+        target = system_name and System(system_name) or self.target
         if target:
-            target_folder = '{}/{}'.format(data, target.name)
-            target.draw(target_folder, view)
+            target.update_from_folder('{}/{}'.format(data, target.name), redraw=True)
             print 'Draw: ok'
         print 'Specify target'
 
