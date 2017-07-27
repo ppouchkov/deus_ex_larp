@@ -341,6 +341,14 @@ Trace:
 Proxy level decreased by 1.
 BlackMirror692 security log updated
 """
+attack_reply_failure_template = """
+executing program #{code} from quentin726 target:{target}
+Node defence: #{defence_code}
+attack failed
+Trace:
+Proxy level decreased by 1.
+BlackMirror692 security log updated
+"""
 attack_reply_get_data_success = u"""
 executing program #20825 from quentin726 target:LadyInRed983
 Node defence: #6393275
