@@ -274,7 +274,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         else:
             self.reply_handler = partial(self.dump_reply_handler,
                                          folder=current_folder,
-                                         file_name_getter=lambda x: '#{0.code}'.format(x),
+                                         file_name_getter=lambda x: dump_program_code(x.code),
                                          parser=parse_program)
             return 'info {}'.format(dump_program_code(current_code))
 
@@ -298,7 +298,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         print 'finish batch_info {}'.format(len(program_codes))
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_file_info(self, file_name, verbose=False):
+    def cmd_info_file(self, file_name, verbose=False):
         with open(os.path.join(data, file_name)) as f:
             self.cmd_info_list(*f.readlines(), verbose=verbose)
 
@@ -313,7 +313,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         if self.target:
             target_folder = os.path.join(data, self.target.name)
             self.target.update_from_folder(target_folder, redraw=True)
-            print 'tgt', self.target.node_graph['firewall'].node_type
         return message
 
     @make_command(is_blocking=True, handler='look_reply_handler')
@@ -334,18 +333,15 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             file_name_getter=lambda obj: obj.name,
             parser=lambda m: parse_node(m)[0]
         )
-        print self.target.node_graph['firewall'].node_type
         return result
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_explore(self, system_node_name='firewall', attack=False):
+    def cmd_explore(self, system_node_name='firewall'):
         self.cmd_look(system_node_name)
         if self.target.node_graph[system_node_name].program_code:
             self.cmd_info_total(self.target.node_graph[system_node_name].program_code, verbose=False)
         if self.target.node_graph[system_node_name].node_effect_name:
             self.cmd_effect(self.target.node_graph[system_node_name].node_effect_name, verbose=False)
-        if attack:
-            self.cmd_attack_choice(system_node_name)
 
     @make_command(is_blocking=False, handler=None)
     def cmd_explore_recursive(self, system_node_name='firewall'):
@@ -366,8 +362,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=False, handler=None)
     def cmd_check_attack(self, attack_code, defence_code):
         current_folder = os.path.join(data, 'programs')
-        current_attack_code = str(attack_code).isdigit() and '#{}'.format(attack_code) or attack_code
-        current_defence_code = str(defence_code).isdigit() and '#{}'.format(defence_code) or defence_code
+        current_attack_code = dump_program_code(attack_code)
+        current_defence_code = dump_program_code(defence_code)
         with open(os.path.join(current_folder, current_attack_code)) as fa:
             attack = yaml.load(fa)
         with open(os.path.join(current_folder, current_defence_code)) as fd:
@@ -380,7 +376,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=True, handler=None)
     def cmd_forward_attack(self, attack_code, system_node):
         self.reply_handler = partial(self.attack_reply_handler, system_node=system_node)
-        return '#{} {}'.format(attack_code, system_node)
+        return '{} {}'.format(dump_program_code(attack_code), system_node)
 
     @make_reply_handler()
     def attack_reply_handler(self, message, system_node):
