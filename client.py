@@ -458,7 +458,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 print '    [{}] {}'.format(current_choice, next_command)
                 current_choice += 1
             if limit_for_effect < len(result[effect_name]):
-                next_command = '/find_attack {} {}'.format(system_node, effect_name, len(result[effect_name]))
+                next_command = '/attack_choice {} {} {}'.format(system_node, effect_name, len(result[effect_name]))
                 self.choice_buffer.append(next_command)
                 print '    [{}] {}'.format(current_choice, next_command)
                 current_choice += 1
