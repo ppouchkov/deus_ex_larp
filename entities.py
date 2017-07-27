@@ -120,6 +120,9 @@ class SystemNode(YAMLObject):
         else:
             program_code = self.program_code
         program_file_name = os.path.join(data, 'programs', program_code)
+        if not os.path.exists(program_file_name):
+            print 'WARNING: unknown code {}'.format(program_code)
+            return None
         try:
             with open(program_file_name) as f:
                 program = yaml.load(f)
