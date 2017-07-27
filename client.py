@@ -379,6 +379,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             self.cmd_info_total(self.target.node_graph[system_node_name].program_code, verbose=False)
         if self.target.node_graph[system_node_name].node_effect_name:
             self.cmd_effect(self.target.node_graph[system_node_name].node_effect_name, verbose=False)
+        print 'verified code: {}'.format(self.target.node_graph[system_node_name].program_code)
 
     @make_command(is_blocking=False, handler=None)
     def cmd_explore_recursive(self, system_node_name='firewall'):
