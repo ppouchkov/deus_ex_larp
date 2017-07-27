@@ -157,7 +157,6 @@ class System(object):
                 continue
             with open(os.path.join(folder_name, elem)) as f:
                 self.add_node(yaml.load(f))
-        print self.node_graph
         if redraw:
             self.draw(folder_name)
 
