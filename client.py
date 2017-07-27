@@ -441,6 +441,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def cmd_attack_choice(self, system_node, effect_filter='all', limit_for_effect=3):
         current_folder = os.path.join(data, 'programs')
         current_node = self.target.node_graph[system_node]
+        if current_node.program_code:
+
         result = {}
         for program_file in os.listdir(current_folder):
             if not program_file.startswith('#'):
@@ -471,6 +473,11 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=False, handler=None)
     def cmd_atk(self, system_node='firewall'):
         self.cmd_attack_choice(system_node)
+
+    @make_command(is_blocking=False, handler=None)
+    def cmd_attack_best_guess(self, system_node):
+        raise NotImplementedError
+        # self.cmd_forward_attack(0, system_node)
 
     @make_command(is_blocking=False, handler=None)
     def cmd_trace_route(self, target_sytem_node_name):
