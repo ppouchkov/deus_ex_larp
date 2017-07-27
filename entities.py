@@ -134,13 +134,14 @@ class SystemNode(YAMLObject):
     @property
     def graphviz_style_dict(self):
         shape = self.node_type in loot_node_types and 'signature' or 'oval'
+        bad_program = self.program_has_inevitable_effect
         if self.node_type == 'UNKNOWN':
             color = 'black'
         elif not self.available:
             color = 'grey'
         elif self.disabled:
             color = 'green'
-        elif self.node_effect_name or self.program_has_inevitable_effect:
+        elif self.node_effect_name or bad_program:
             color = 'red'
         else:
             color = 'white'
