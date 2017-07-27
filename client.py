@@ -242,6 +242,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         target = system_name and System(system_name) or self.target
         if target:
             target.update_from_folder('{}/{}'.format(data, target.name), redraw=True)
+            target.draw('{}/{}'.format(data, target.name), view=True)
             print 'Draw: ok'
         print 'Specify target'
 
