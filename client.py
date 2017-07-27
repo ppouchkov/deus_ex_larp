@@ -442,27 +442,30 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         current_folder = os.path.join(data, 'programs')
         current_node = self.target.node_graph[system_node]
         if current_node.program_code:
-
-        result = {}
-        for program_file in os.listdir(current_folder):
-            if not program_file.startswith('#'):
-                continue
-            with open(os.path.join(current_folder, program_file)) as f:
-                current_program = yaml.load(f)
-                assert isinstance(current_program, Program)
-                if current_node.node_type not in set(current_program.node_types):
+            print 'Best Guess:'
+            result_code = self.attack_best_guess()
+            self.add_choice('/forward_attack {} {}'.format(result_code, system_node))
+        else:
+            result = {}
+            for program_file in os.listdir(current_folder):
+                if not program_file.startswith('#'):
                     continue
-                if not check_rule(current_program.code, current_node.program_code):
-                    continue
-                result.setdefault(current_program.effect_name, []).append(current_program)
-        for effect_name in [effect_name for effect_name in result
-                            if effect_filter == 'all' or effect_filter == effect_name]:
-            print 'Effect: {}'.format(effect_name)
-            for i in range(min(limit_for_effect, len(result[effect_name]))):
-                self.add_choice('/forward_attack {} {}'.format(result[effect_name][i].code, system_node))
-            if limit_for_effect < len(result[effect_name]):
-                self.add_choice('/attack_choice {} {} {}'.format(system_node, effect_name, len(result[effect_name])))
-        print 'Default: '
+                with open(os.path.join(current_folder, program_file)) as f:
+                    current_program = yaml.load(f)
+                    assert isinstance(current_program, Program)
+                    if current_node.node_type not in set(current_program.node_types):
+                        continue
+                    if not check_rule(current_program.code, current_node.program_code):
+                        continue
+                    result.setdefault(current_program.effect_name, []).append(current_program)
+            for effect_name in [effect_name for effect_name in result
+                                if effect_filter == 'all' or effect_filter == effect_name]:
+                print 'Effect: {}'.format(effect_name)
+                for i in range(min(limit_for_effect, len(result[effect_name]))):
+                    self.add_choice('/forward_attack {} {}'.format(result[effect_name][i].code, system_node))
+                if limit_for_effect < len(result[effect_name]):
+                    self.add_choice('/attack_choice {} {} {}'.format(system_node, effect_name, len(result[effect_name])))
+        print 'Default:'
         self.add_choice('/flush_choice')
 
     @make_command(is_blocking=False, handler=None)
@@ -474,10 +477,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def cmd_atk(self, system_node='firewall'):
         self.cmd_attack_choice(system_node)
 
-    @make_command(is_blocking=False, handler=None)
-    def cmd_attack_best_guess(self, system_node):
-        raise NotImplementedError
-        # self.cmd_forward_attack(0, system_node)
+    def attack_best_guess(self, effect_filter='all'):
+        return 0
 
     @make_command(is_blocking=False, handler=None)
     def cmd_trace_route(self, target_sytem_node_name):
