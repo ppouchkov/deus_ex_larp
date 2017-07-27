@@ -3,6 +3,7 @@
 import datetime
 import logging
 import os
+import threading
 from collections import deque
 from functools import partial
 from time import sleep
@@ -22,6 +23,7 @@ def make_command(is_blocking, handler):
     def wrapped(command_method):
         def wrapper(instance, *args, **kwargs):
             try:
+                logging.info('> {}'.format(threading.current_thread().name))
                 logging.info('> {}({}{}{})'.format(
                     command_method.__name__,
                     ', '.join(str(arg) for arg in args),
@@ -41,7 +43,8 @@ def make_command(is_blocking, handler):
                 wait_start = datetime.datetime.now()
                 while instance.wait_for_reply:
                     if datetime.datetime.now() > wait_start + datetime.timedelta(seconds=ResendingClient.wait_for_reply_max):
-                        raise ValueError('Waited too long')
+                        th_name = threading.current_thread().name
+                        raise ValueError('Waited too long in {}'.format(th_name))
                     sleep(ResendingClient.wait_rate)
             except Exception as e:
                 print 'CMD ERROR: {}'.format(str(e))
@@ -55,6 +58,7 @@ def make_reply_handler():
         def wrapper(instance, message, **kwargs):
             result = None
             try:
+                logging.info('< {}'.format(threading.current_thread().name))
                 logging.info('< {}({})'.format(
                     handler_method.__name__,
                     ', '.join('{}={}'.format(k, kwargs[k]) for k in kwargs)))
@@ -157,7 +161,8 @@ class ResendingClient(sleekxmpp.ClientXMPP):
             try:
                 next_command = self.choice_buffer[int(command)]
                 self.choice_buffer = []
-                self.forward_message(next_command)
+                # self.forward_message(next_command)
+                self._start_thread('choice thread', target=lambda : self.forward_message(next_command))
             except Exception as e:
                 print 'ERROR parsing choice {}: {}'.format(message, str(e))
                 print 'Flush choice buffer'
@@ -389,7 +394,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         current_node.disabled = attack_reply.new_disabled
         if attack_reply.new_defence:
             current_node.program_code = attack_reply.new_defence
-        return '{}\n{}'.format(message, '\n    - '.join(['', ] + attack_reply.warning))
+        return '{}{}'.format(message, '\n'.join('    - {}'.format(w) for w in attack_reply.warning))
 
     @make_command(is_blocking=False, handler=None)
     def cmd_explore_choice(self, system_node='firewall'):
