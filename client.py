@@ -96,6 +96,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     def message_read_from_stdin(self):
         threading.current_thread().name = 'Reader'
+        logging.info('{} started'.format(threading.current_thread().name))
         while True:
             message = raw_input()
             self.input_queue.put(message)
@@ -104,6 +105,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         logging.info('{} exited'.format(threading.current_thread().name))
 
     def message_process(self):
+        logging.info('{} started'.format(threading.current_thread().name))
         threading.current_thread().name = 'Processor'
         while True:
             message = self.input_queue.get()
@@ -136,17 +138,18 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                 getattr(self, 'cmd_{}'.format(command))(*args)
             else:
                 print 'No such command {}'.format(command)
+        logging.info('{} exited'.format(threading.current_thread().name))
 
     def message_reply_parser(self):
+        logging.info('{} started'.format(threading.current_thread().name))
         threading.current_thread().name = 'ReplyParser'
         while True:
             message = self.output_queue.get()
             if message == '/exit':
-                self.output_queue.put(message)
                 break
             while not self.wait_for_reply:
                 sleep(self.wait_rate)
-            self.reply_handler(message)
+            print self.reply_handler(message)
             self.wait_for_reply = False
         self.close()
         logging.info('{} exited'.format(threading.current_thread().name))
@@ -179,6 +182,9 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
         if start:
             self.start()
+        else:
+            self._start_thread("Processor", self.message_process)
+            self._start_thread("ReplyParser", self.message_reply_parser)
 
     def start(self):
         if self.connect():
@@ -190,11 +196,10 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def session_start(self, event):
         self.send_presence()
         self.get_roster()
-
         self._start_thread("Reader", self.message_read_from_stdin)
         self._start_thread("Processor", self.message_process)
-        self._start_thread("ReplyParser", self.message_reply_parser())
-
+        self._start_thread("ReplyParser", self.message_reply_parser)
+        sleep(3)
         self.input_queue.put(self.greeting_message)
 
     def message(self, msg):
