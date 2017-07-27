@@ -129,6 +129,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                     next_command = self.choice_buffer[int(command)]
                     self.cmd_flush_choice()
                     self.input_queue.put(next_command)
+                    continue
                 except Exception as e:
                     print 'ERROR parsing choice {}: {}'.format(message, str(e))
                     print 'Flush choice buffer'
@@ -260,11 +261,13 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         current_folder = os.path.join(data, 'effects')
         effect = cache_check(current_folder, effect_name)
         if effect:
+            print 'cache hit: {}'.format(effect_name)
             logging.info('cache hit: {}'.format(effect_name))
             self.wait_for_reply = False
             if verbose:
                 print effect
         elif effect is None:
+            print 'cache miss: {}'.format(effect_name)
             logging.info('cache miss: {}'.format(effect_name))
             self.reply_handler = partial(self.dump_reply_handler,
                                          folder=current_folder,
@@ -287,11 +290,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
         program = cache_check(current_folder, dump_program_code(current_code))
         if program:
+            print 'cache hit: {}'.format(current_code)
             logging.info('cache hit: {}'.format(current_code))
             self.wait_for_reply = False
             if verbose:
                 print program
         else:
+            print 'cache miss: {}'.format(current_code)
+            logging.info('cache miss: {}'.format(current_code))
             self.reply_handler = partial(self.dump_reply_handler,
                                          folder=current_folder,
                                          file_name_getter=lambda x: dump_program_code(x.code),
@@ -301,8 +307,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=False, handler=None)
     def cmd_info_total(self, program_code, verbose=False):
         current_folder = os.path.join(data, 'programs')
-        if cache_check(current_folder, dump_program_code(program_code)) is None:
-            self.cmd_info(program_code, verbose)
+        self.cmd_info(program_code, verbose)
         program = cache_check(current_folder, dump_program_code(program_code))
         if program.effect_name:
             self.cmd_effect(program.effect_name, verbose=False)
@@ -420,7 +425,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     @make_command(is_blocking=False, handler=None)
     def cmd_explore_choice(self, system_node='firewall'):
         current_node = self.target.node_graph[system_node]
-        self.choice_buffer.append('/explore {} attack'.format(system_node))
+        self.choice_buffer.append('/explore {}'.format(system_node))
         for child_name in current_node.child_nodes_names:
             self.choice_buffer.append('/explore {}}'.format(child_name))
         self.choice_buffer.append('/flush_choice')
