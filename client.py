@@ -484,7 +484,6 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         start_system_node_name = 'firewall'
         pass
 
-
     @make_command(is_blocking=False, handler=None)
     def cmd_parse_diagnostics(self, file_name, skip_codes=False):
         current_path = os.path.join(data, file_name)
