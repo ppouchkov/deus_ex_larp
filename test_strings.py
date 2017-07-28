@@ -194,6 +194,19 @@ Allowed node types:
 END ----------------
 """
 
+attack_reply_read_data_success = u"""
+executing program #{code} from quentin726 target:{target}
+Node defence: #{defence_code}
+attack successfull
+Data in LadyInRed983/system_information:
+--------------------
+
+LadyInRed is ALICE-based cybersystem for Эш (Ash).
+ALICE ID: 0000
+
+END ----------------
+"""
+
 command_defence = """
 --------------------
 #432225 programm info:

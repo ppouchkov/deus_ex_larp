@@ -5,6 +5,7 @@ import logging
 import os
 import threading
 from Queue import Queue
+from collections import deque
 from functools import partial
 from time import sleep
 
@@ -28,7 +29,7 @@ def make_command(is_blocking, handler):
     def wrapped(command_method):
         def wrapper(instance, *args, **kwargs):
             try:
-                logging.info('> {}({}{}{})'.format(
+                logging.info('> start {}({}{}{})'.format(
                     command_method.__name__,
                     ', '.join(str(arg) for arg in args),
                     ', ' if kwargs else '',
@@ -42,8 +43,13 @@ def make_command(is_blocking, handler):
                     instance.reply_handler = getattr(instance, 'default_reply_handler')
                 message = command_method(instance, *args, **kwargs)
                 if message:
+                    delta = (instance.last_command_sent + instance.sending_delay - datetime.datetime.now()
+                             ).total_seconds()
+                    if delta > 0:
+                        sleep(delta)
                     logging.info('>>> {}'.format(message))
                     instance.send_message(instance.recipient, message, mtype='chat')
+                    instance.last_command_sent = datetime.datetime.now()
                 wait_start = datetime.datetime.now()
                 while instance.wait_for_reply:
                     if datetime.datetime.now() > wait_start + datetime.timedelta(seconds=ResendingClient.wait_for_reply_max):
@@ -53,6 +59,12 @@ def make_command(is_blocking, handler):
             except Exception as e:
                 print 'CMD ERROR: {}'.format(str(e))
                 logging.exception('CMD {} ERROR: {}'.format(command_method.__name__, str(e)))
+            finally:
+                logging.info('> finish {}({}{}{})'.format(
+                    command_method.__name__,
+                    ', '.join(str(arg) for arg in args),
+                    ', ' if kwargs else '',
+                    ', '.join('{}={}'.format(k, kwargs[k]) for k in kwargs)))
         return wrapper
     return wrapped
 
@@ -63,7 +75,7 @@ def make_reply_handler():
             result = None
             try:
                 logging.info('< {}'.format(threading.current_thread().name))
-                logging.info('< {}({})'.format(
+                logging.info('< start {}({})'.format(
                     handler_method.__name__,
                     ', '.join('{}={}'.format(k, kwargs[k]) for k in kwargs)))
                 logging.info('<<< {}'.format(message))
@@ -75,6 +87,9 @@ def make_reply_handler():
             finally:
                 instance.wait_for_reply = False
                 instance.reply_handler = getattr(instance, 'default_reply_handler')
+                logging.info('< finish {}({})'.format(
+                    handler_method.__name__,
+                    ', '.join('{}={}'.format(k, kwargs[k]) for k in kwargs)))
             return result
         return wrapper
     return wrapped
@@ -110,12 +125,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         while True:
             message = self.input_queue.get()
             if message == '/exit':
+                logging.info('forward /exit')
                 self.output_queue.put(message)
                 break
             if not self._is_internal_command(message):
                 delta = (self.last_command_sent + self.sending_delay - datetime.datetime.now()).total_seconds()
                 if delta > 0:
                     sleep(delta)
+                logging.info('>>> {}'.format(message))
                 self.send_message(self.recipient, message, mtype='chat')
                 self.last_command_sent = datetime.datetime.now()
                 continue
@@ -142,18 +159,21 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         logging.info('{} exited'.format(threading.current_thread().name))
 
     def message_reply_parser(self):
-        logging.info('{} started'.format(threading.current_thread().name))
-        threading.current_thread().name = 'ReplyParser'
-        while True:
-            message = self.output_queue.get()
-            if message == '/exit':
-                break
-            while not self.wait_for_reply:
-                sleep(self.wait_rate)
-            print self.reply_handler(message)
-            self.wait_for_reply = False
-        self.close()
-        logging.info('{} exited'.format(threading.current_thread().name))
+        try:
+            logging.info('{} started'.format(threading.current_thread().name))
+            threading.current_thread().name = 'ReplyParser'
+            while True:
+                message = self.output_queue.get()
+                logging.info('got "{}{}"'.format(message.replace('\n', '\\n ')[:20], len(message) > 20 and '...' or ''))
+                if message == '/exit':
+                    break
+                print self.reply_handler(message)
+                self.wait_for_reply = False
+            self.close()
+            logging.info('{} exited'.format(threading.current_thread().name))
+        except:
+            logging.exception('on message reply parsing')
+            raise
 
     def __init__(self, start=True):
         sleekxmpp.ClientXMPP.__init__(self, attacker.jid, attacker.pwd)
@@ -175,6 +195,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.input_queue = Queue()
         self.output_queue = Queue()
         self.choice_buffer = []
+        self.output_buffer = deque([], maxlen=5)
 
         self.reply_handler = self.default_reply_handler
 
@@ -205,7 +226,11 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     def message(self, msg):
         # TODO check from
-        self.output_queue.put(msg['body'])
+        try:
+            self.output_buffer.appendleft(msg['body'])
+            self.output_queue.put(msg['body'])
+        except:
+            logging.exception('on message recived: {}'.format(msg['body']))
 
     def add_choice(self, command):
         current_choice = len(self.choice_buffer)
@@ -221,9 +246,11 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         self.disconnect(wait=True)
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_store(self, content, file_name='stored_data'):
+    def cmd_store(self, file_name='stored_data', content=None):
+        current_content = content or self.output_buffer[0]
         current_folder = self.target and os.path.join(data, self.target.name) or data
-        stable_write(current_folder, file_name, content, mode='a')
+        stable_write(current_folder, file_name, '\n' + '='*20 + '\n', mode='a')
+        stable_write(current_folder, file_name, current_content, mode='a')
 
     @make_command(is_blocking=True, handler=None)
     def cmd_target(self, system):
