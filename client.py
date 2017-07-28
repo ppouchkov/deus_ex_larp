@@ -440,7 +440,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     def cmd_attack_choice(self, system_node, effect_filter='all', limit_for_effect=3):
         current_folder = os.path.join(data, 'programs')
         current_node = self.target.node_graph[system_node]
-        if current_node.program_code:
+        if not current_node.program_code:
             print 'Best Guess:'
             result_code = self.attack_best_guess()
             self.add_choice('/forward_attack {} {}'.format(result_code, system_node))
