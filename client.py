@@ -413,11 +413,11 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     @make_command(is_blocking=True, handler=None)
     def cmd_forward_attack(self, attack_code, system_node):
-        self.reply_handler = partial(self.attack_reply_handler, system_node=system_node)
+        self.reply_handler = partial(self.forward_attack_reply_handler, system_node=system_node)
         return '{} {}'.format(dump_program_code(attack_code), system_node)
 
     @make_reply_handler()
-    def attack_reply_handler(self, message, system_node):
+    def forward_attack_reply_handler(self, message, system_node):
         attack_reply = parse_attack_reply(message)
         assert isinstance(attack_reply, AttackReply)
         current_node = self.target.node_graph[system_node]
@@ -429,21 +429,26 @@ class ResendingClient(sleekxmpp.ClientXMPP):
         return message
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_explore_choice(self, system_node='firewall'):
+    def cmd_explore_choice(self, system_node='firewall', command='explore'):
         current_node = self.target.node_graph[system_node]
-        self.add_choice('/explore {}'.format(system_node))
+        self.add_choice('/{} {}'.format(command, system_node))
         for child_name in current_node.child_nodes_names:
-            self.add_choice('/explore {}}'.format(child_name))
+            self.add_choice('/{} {}'.format(command, child_name))
         self.add_choice('/flush_choice')
 
     @make_command(is_blocking=False, handler=None)
-    def cmd_attack_choice(self, system_node, effect_filter='all', limit_for_effect=3):
+    def cmd_attack_choice(self, system_node, effect_filter='all', limit_for_effect=3, choice_template=None):
+        default_choice_template = '/forward_attack {code} {node_name}'
+        extend_choice_template = '/attack_choice {system_node} {effect_filter} {limit_for_effect}{choice_template}'
+        current_choice_template = choice_template or default_choice_template
         current_folder = os.path.join(data, 'programs')
         current_node = self.target.node_graph[system_node]
+        print 'Current node: {} {} {}'.format(current_node.name, current_node.node_type,
+                                              current_node.program_code or 'Unknown')
         if not current_node.program_code:
             print 'Best Guess:'
             result_code = self.attack_best_guess()
-            self.add_choice('/forward_attack {} {}'.format(result_code, system_node))
+            self.add_choice(default_choice_template.format(code=result_code, node_name=system_node))
         else:
             result = {}
             for program_file in os.listdir(current_folder):
@@ -461,9 +466,14 @@ class ResendingClient(sleekxmpp.ClientXMPP):
                                 if effect_filter == 'all' or effect_filter == effect_name]:
                 print 'Effect: {}'.format(effect_name)
                 for i in range(min(limit_for_effect, len(result[effect_name]))):
-                    self.add_choice('/forward_attack {} {}'.format(result[effect_name][i].code, system_node))
+                    self.add_choice(current_choice_template.format(code=result[effect_name][i].code, node_name=system_node))
                 if limit_for_effect < len(result[effect_name]):
-                    self.add_choice('/attack_choice {} {} {}'.format(system_node, effect_name, len(result[effect_name])))
+                    self.add_choice(extend_choice_template.format(
+                        system_node=system_node,
+                        effect_filter=effect_filter,
+                        limit_for_effect=len(result[effect_name]),
+                        choice_template=choice_template and ' {}'.format(extend_choice_template) or ''
+                    ))
         print 'Default:'
         self.add_choice('/flush_choice')
 
@@ -474,7 +484,15 @@ class ResendingClient(sleekxmpp.ClientXMPP):
 
     @make_command(is_blocking=False, handler=None)
     def cmd_atk(self, system_node='firewall'):
-        self.cmd_attack_choice(system_node)
+        self.cmd_explore(system_node)
+        current_node = self.target.node_graph[system_node]
+        if not current_node.available:
+            print 'node {} unavailable'.format(system_node)
+            return
+        if current_node.disabled:
+            self.cmd_explore_choice(system_node, 'atk')
+        else:
+            self.cmd_attack_choice(system_node)
 
     def attack_best_guess(self, effect_filter='all'):
         return 0
