@@ -102,7 +102,7 @@ class ResendingClient(sleekxmpp.ClientXMPP):
     disable_locks = False
 
     wait_for_reply = False
-    wait_for_reply_max = 60
+    wait_for_reply_max = 60 * 5
     wait_rate = 0.5
 
     @classmethod
